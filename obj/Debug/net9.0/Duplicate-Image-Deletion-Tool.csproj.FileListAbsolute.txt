@@ -1,0 +1,15 @@
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Duplicate-Image-Deletion-Tool.exe
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Duplicate-Image-Deletion-Tool.deps.json
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Duplicate-Image-Deletion-Tool.runtimeconfig.json
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Duplicate-Image-Deletion-Tool.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Duplicate-Image-Deletion-Tool.pdb
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.AssemblyInfoInputs.cache
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.AssemblyInfo.cs
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.csproj.CoreCompileInputs.cache
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.sourcelink.json
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\refint\Duplicate-Image-Deletion-Tool.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.pdb
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.genruntimeconfig.cache
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\ref\Duplicate-Image-Deletion-Tool.dll
