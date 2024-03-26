@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Duplicate-Image-Deletion-Tool")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b8c9536c3a9c06308da44a0d93d60920c9d73f55")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5f1e58782426e0c8712550e68b03eb961f3072dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("Duplicate-Image-Deletion-Tool")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Duplicate-Image-Deletion-Tool")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -25,19 +25,20 @@ namespace program
             string? targetDirectory;
             // Validate user input and prevent attacks (including injection attacks)
             // Repeat the do-while loop and prompt user to try again? (true if the user enters invalid input)
-            bool promptUserForInputAgain;
+            string? sanitizedPath;
             do
             {
                 targetDirectory = Console.ReadLine();
-                promptUserForInputAgain = IsUserInputValid(targetDirectory);
-            } 
-            while (promptUserForInputAgain);
+                sanitizedPath = IsUserInputValid(targetDirectory);
+            }
+            while (sanitizedPath == null);
 
-            string sanitizedPath = Path.GetFullPath(targetDirectory);
+            // Commence duplicate removal here: 
+            Console.WriteLine("Processing...");
 
-           // Commence duplicate removal here: 
-           Console.WriteLine("Processing...");
+            DeleteDuplicateImages(sanitizedPath);
 
+            
         }
 
         /// <summary>
@@ -52,16 +53,18 @@ namespace program
         /// filer out.</param>
         /// 
         /// <returns>
-        /// Returns false if the path entered by the user was valid. 
-        /// If false is returned, this means that we won't prompt the user
-        /// again to provide an address to a directory.</returns>
-        static bool IsUserInputValid(string path)
+        /// Returns the sanitised path as a string only if the user enters a 
+        /// valid string. If the user's input was invalid (e.g., an empty string
+        /// or a path that doesn't exist), a null is returned, which would 
+        /// signal the main method to prompt the user for inputting a valid 
+        /// path again.</returns>
+        static string? IsUserInputValid(string path)
         {
             if (path == null || path.Equals("")) // Ensuring input is not empty
             {
                 // Error message here
                 Console.WriteLine("ERROR: Input cannot have 0 characters.");
-                return true; // have the user repeat their input
+                return null; // have the user repeat their input
             }
             else
             {
@@ -71,15 +74,27 @@ namespace program
                 if (Path.Exists(sanitizedPath) == false) // If path doesn't exist
                 {
                     Console.WriteLine("ERROR: Path doesn't exist. Try entering a valid path.");
-                    return true;
-                } 
-                else 
+                    return null;
+                }
+                else
                 {
                     Console.WriteLine("The target file which will have the images in "
                     + "it filtered is located at: \n" + sanitizedPath);
-                    return false;
+                    return sanitizedPath;
                 }
             }
         }
+
+        static void DeleteDuplicateImages(string sanitizedPath)
+        {
+            string[] picturesNames = Directory.GetFiles(sanitizedPath);
+            foreach (string name in picturesNames)
+            {
+                Console.WriteLine(name);
+            }
+
+
+        }
+
     }
 }
