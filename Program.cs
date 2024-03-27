@@ -87,13 +87,41 @@ namespace program
 
         static void DeleteDuplicateImages(string sanitizedPath)
         {
-            string[] picturesNames = Directory.GetFiles(sanitizedPath);
-            foreach (string name in picturesNames)
+
+            // Traverse a directory and its subdirectories
+            List<string> pathsOfImagesToFilter = TraverseImageDirectory(sanitizedPath);
+
+            // TODO: Compute the hash for each image. Consider using a hash map where the key is the image's Hash and the value is the path to the image. 
+            // It is also possible that the hash map will do the deletion for you, refresh your memory on how hash maps work, especially when collision (same keys) happen
+
+        }
+
+        /// <summary>
+        /// Explore the directory that was given to us by the user. 
+        /// Not only we'll check the directory, but also any other 
+        /// subdirectories within the user-provided directory. 
+        /// This function will be recursive.
+        /// </summary>
+        /// <param name="sanitizedPath">The sanitized path to the 
+        /// target directory.</param>
+        /// <returns>The names of all the pictures found within the 
+        /// directory and its sub-directories.</returns>
+        static List<string> TraverseImageDirectory(string sanitizedPath)
+        {
+            List<string> imagesFound = [];
+
+            // Adding the images in the current directory, the target one
+            string[] picturePaths = Directory.GetFiles(sanitizedPath);
+            imagesFound.AddRange(picturePaths);
+
+            // Getting the paths of subdirectories and exploring each one
+            string[] subdirectories = Directory.GetDirectories(sanitizedPath);
+            foreach (string subdirectory in subdirectories)
             {
-                Console.WriteLine(name);
+                imagesFound.AddRange(TraverseImageDirectory(subdirectory));
             }
-
-
+            
+            return imagesFound;
         }
 
     }
