@@ -1,5 +1,22 @@
-﻿using System;
+﻿/*
+Edge cases to consider: 
+1- Two images that have the same size and quality, but different extensions
+2- Image is lower in quality but have a higher size
+
+
+Parameters to use when comparing images: 
+1- The image with the greater size
+2- The image with the higher resolution
+3- The image with the greater dimensions
+*/
+
+
+
+using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Security.Cryptography;
+
 
 namespace program
 {
@@ -87,12 +104,21 @@ namespace program
 
         static void DeleteDuplicateImages(string sanitizedPath)
         {
-
             // Traverse a directory and its subdirectories
             List<string> pathsOfImagesToFilter = TraverseImageDirectory(sanitizedPath);
 
-            // TODO: Compute the hash for each image. Consider using a hash map where the key is the image's Hash and the value is the path to the image. 
-            // It is also possible that the hash map will do the deletion for you, refresh your memory on how hash maps work, especially when collision (same keys) happen
+            
+            // A hashmap containing the has of every image and the directory 
+            // to the image associated with the hash
+            Dictionary<string, string> hashAndImgDirectoryPairs = new Dictionary<string, string>();
+
+            foreach (string imagePath in pathsOfImagesToFilter)
+            {
+                // Compute hash for image
+                string imageHash = ComputeImageHash(imagePath);
+                Console.WriteLine("The image: " + imagePath + "\n Has this hash: " + imageHash);
+            }
+
 
         }
 
@@ -124,5 +150,43 @@ namespace program
             return imagesFound;
         }
 
+        static string ComputeImageHash(string imagePath)
+        {
+            /* Creates an instance of the MD5 hashing algorithm from 
+            System.Security.Cryptography */
+            using (var md5 = MD5.Create())
+            {
+                // Returns a FileStream object that allows reading from a file
+                using (var stream = File.OpenRead(imagePath)) 
+                {
+                    // Returned hash is in the form of an array of bytes
+                    byte [] hash = md5.ComputeHash(stream);
+
+                    //Console.WriteLine("Hash: " + )
+
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
     }
+
+
+
+    /*
+    /// <summary>
+    /// A class as a primary constructor representing each image in 
+    /// the user-provided target directory
+    /// </summary>
+    /// <param name="path">The absolute path to the image</param>
+    /// <param name="size">The size of the image in bytes</param>
+    /// <param name="height">The height of the image in pixels</param>
+    /// <param name="width">The height of the image in pixels</param>
+    class Image(string path, long size, int height, int width)
+    {
+        public string Path { get; set; } = path;
+        public long Size { get; set; } = size;
+        public int Height { get; set; } = height;
+        public int Width { get; set; } = width;
+    }
+    */
 }
