@@ -13,3 +13,8 @@ C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\refint\Duplic
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.pdb
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.genruntimeconfig.cache
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\ref\Duplicate-Image-Deletion-Tool.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\System.Drawing.Common.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicate-Image-Deletion-Tool.csproj.AssemblyReference.cache
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\obj\Debug\net9.0\Duplicat.008733EC.Up2Date

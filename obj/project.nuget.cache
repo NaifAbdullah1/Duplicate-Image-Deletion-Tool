@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "eSJ0itBvwsLD0Lpp/sWVcuoau1jEbb0Q/FS5OoVelreX3k5nU1YRxXA0MWIiZir86B56+TZk/x/nsnR/PHKruw==",
+  "dgSpecHash": "KCyKH7ZpU1wtKlff2QKuJQKEW1nSRUNQqRpIOVbufJsdvIwPHCfZe1OOwAPyksFYZPp74BANRB/QtJI4nlwNdA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\Duplicate-Image-Deletion-Tool.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Naif-\\.nuget\\packages\\microsoft.win32.systemevents\\8.0.0\\microsoft.win32.systemevents.8.0.0.nupkg.sha512",
+    "C:\\Users\\Naif-\\.nuget\\packages\\system.drawing.common\\8.0.3\\system.drawing.common.8.0.3.nupkg.sha512"
+  ],
   "logs": []
 }

@@ -15,10 +15,13 @@ Parameters to use when comparing images:
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Security.Cryptography;
+//using System.Security.Cryptography;
+
+using System.Drawing;
+using System.Runtime.Serialization;
 
 
-namespace program
+namespace DuplicateImageDeletionTool
 {
     /// <summary>
     /// This class contains the main program logic for removing duplicated 
@@ -105,18 +108,46 @@ namespace program
         static void DeleteDuplicateImages(string sanitizedPath)
         {
             // Traverse a directory and its subdirectories
-            List<string> pathsOfImagesToFilter = TraverseImageDirectory(sanitizedPath);
+            List<string> pathsOfImagesToFilter = TraverseTargetDirectory(sanitizedPath);
 
             
             // A hashmap containing the has of every image and the directory 
             // to the image associated with the hash
-            Dictionary<string, string> hashAndImgDirectoryPairs = new Dictionary<string, string>();
+            Dictionary<string, string> hashAndImagePathPairs = new Dictionary<string, string>();
 
             foreach (string imagePath in pathsOfImagesToFilter)
             {
                 // Compute hash for image
-                string imageHash = ComputeImageHash(imagePath);
-                Console.WriteLine("The image: " + imagePath + "\n Has this hash: " + imageHash);
+                string imageDHash = ComputeImageDHash(imagePath);
+                
+                if (hashAndImagePathPairs.ContainsKey(imageDHash)) // Exact Duplicate?
+                {
+                    // hashAndImagePathPairs[imageDHash] -> Existing image's path
+                    // By "Existing", we're referring to images already 
+                    // in hashAndImagePathPairs. imagePath -> Contains new image's path
+                    
+                    if (ReplaceExistingImageWithTheNewOne(hashAndImagePathPairs[imageDHash], imagePath))
+                    {
+
+                    }
+
+                    
+
+                    bool existingImageIsLarger = newImageInfo.Length > existingImageInfo.Length;
+                    
+                    
+                    Console.WriteLine("##existing image: " + hashAndImagePathPairs[imageDHash]);
+                    Console.WriteLine("##New Image: " + imagePath);
+                    
+                }
+                else 
+                {
+                    hashAndImagePathPairs.Add(imageDHash, imagePath);
+                }
+                
+
+                //string imageHash = ComputeImageHash(imagePath);
+                Console.WriteLine("The image: " + imagePath + "\n Has this hash: " + imageDHash);
             }
 
 
@@ -132,7 +163,7 @@ namespace program
         /// target directory.</param>
         /// <returns>The names of all the pictures found within the 
         /// directory and its sub-directories.</returns>
-        static List<string> TraverseImageDirectory(string sanitizedPath)
+        static List<string> TraverseTargetDirectory(string sanitizedPath)
         {
             List<string> imagesFound = [];
 
@@ -144,16 +175,73 @@ namespace program
             string[] subdirectories = Directory.GetDirectories(sanitizedPath);
             foreach (string subdirectory in subdirectories)
             {
-                imagesFound.AddRange(TraverseImageDirectory(subdirectory));
+                imagesFound.AddRange(TraverseTargetDirectory(subdirectory));
             }
             
             return imagesFound;
         }
 
+        static string ComputeImageDHash(string imagePath)
+        {
+            // Opening the image as a Bitmap. "using" helps freeing up memory
+            using (Bitmap image = new Bitmap(imagePath)) 
+            {
+                // Resizing image to 9x8 for dHash computation to standardize 
+                // the image size for dHash calculation. The bigger the
+                // size (e.g., 16x15), the more accurate the comparison will be
+                // at the cost of a longer runtime
+                Bitmap resizedImage = new Bitmap(image, new Size(9, 8)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
+
+                // Computing dHash
+                /*
+                Iterating over the pixels of the resized image to compute the 
+                dHash. For each row of pixels, it compares the brightness of 
+                each pixel with the brightness of the next pixel in the row. 
+                If the brightness of the current pixel is greater than the 
+                brightness of the next pixel, it appends "1" to the hash; 
+                otherwise, it appends "0". This process generates a binary 
+                string representing the dHash of the image.
+                Brightness comparison helps capture the edge information 
+                and basic structure of the image.
+                */
+                string hash = "";
+                for (int y = 0; y < resizedImage.Height; y++)
+                {
+                    for (int x = 0; x < resizedImage.Width - 1; x++)
+                    {
+                        hash += (resizedImage.GetPixel(x, y).GetBrightness() > resizedImage.GetPixel(x + 1, y).GetBrightness()) ? "1" : "0";
+                    }
+                }
+
+                return hash;
+            }
+        }
+
+        /// <summary>
+        /// Two criterions must be met to replace an image already in 
+        /// the hashmap "hashAndImagePathPairs" with a new one: 
+        /// 1- The new image must be larger in size
+        /// 2- New image must have a higher vertical and horizontal resolution
+        /// </summary>
+        /// <param name="existingImagePath">Path of the image already in 
+        /// the hashmap hashAndImagePathPairs</param>
+        /// <param name="newImagePath">The path of the image we're 
+        /// potentially adding to the hashmap</param>
+        /// <returns>Returns true if the two conditions above are met.
+        /// Returns false otherwise.</returns>
+        static bool ReplaceExistingImageWithTheNewOne(string existingImagePath, string newImagePath)
+        {
+            FileInfo existingImageInfo = new FileInfo(existingImagePath);
+            FileInfo newImageInfo = new FileInfo(newImagePath);
+
+            // TODO: Do the comparisons mentioned in the javadoc
+
+        }
+        /*
         static string ComputeImageHash(string imagePath)
         {
-            /* Creates an instance of the MD5 hashing algorithm from 
-            System.Security.Cryptography */
+            // Creates an instance of the MD5 hashing algorithm from 
+            // System.Security.Cryptography
             using (var md5 = MD5.Create())
             {
                 // Returns a FileStream object that allows reading from a file
@@ -168,6 +256,9 @@ namespace program
                 }
             }
         }
+    
+        */
+    
     }
 
 
