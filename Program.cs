@@ -107,7 +107,8 @@ namespace DuplicateImageDeletionTool
 
         static void DeleteDuplicateImages(string sanitizedPath)
         {
-            // Traverse a directory and its subdirectories
+            // Traverse a directory and its subdirectories. Results is a list 
+            // of every image's path
             List<string> pathsOfImagesToFilter = TraverseTargetDirectory(sanitizedPath);
 
             
@@ -119,36 +120,28 @@ namespace DuplicateImageDeletionTool
             {
                 // Compute hash for image
                 string imageDHash = ComputeImageDHash(imagePath);
-                
+
+                // In the event an image with an identical hash was found, 
+                // We'll do further checks to determine which one to take. 
                 if (hashAndImagePathPairs.ContainsKey(imageDHash)) // Exact Duplicate?
                 {
                     // hashAndImagePathPairs[imageDHash] -> Existing image's path
                     // By "Existing", we're referring to images already 
                     // in hashAndImagePathPairs. imagePath -> Contains new image's path
-                    
                     if (ReplaceExistingImageWithTheNewOne(hashAndImagePathPairs[imageDHash], imagePath))
                     {
-
+                        // TODO: Before you replace the image, move the existing image to the deletion folder and write the report log
+                        // Replacing
+                        hashAndImagePathPairs[imageDHash] = imagePath; 
                     }
-
-                    
-
-                    bool existingImageIsLarger = newImageInfo.Length > existingImageInfo.Length;
-                    
-                    
-                    Console.WriteLine("##existing image: " + hashAndImagePathPairs[imageDHash]);
-                    Console.WriteLine("##New Image: " + imagePath);
-                    
                 }
                 else 
                 {
                     hashAndImagePathPairs.Add(imageDHash, imagePath);
                 }
-                
-
-                //string imageHash = ComputeImageHash(imagePath);
-                Console.WriteLine("The image: " + imagePath + "\n Has this hash: " + imageDHash);
             }
+
+            // Now, we are to go over hashAndImagePathPairs and compute hamming distances and act accordingly. 
 
 
         }
@@ -233,8 +226,59 @@ namespace DuplicateImageDeletionTool
         {
             FileInfo existingImageInfo = new FileInfo(existingImagePath);
             FileInfo newImageInfo = new FileInfo(newImagePath);
+            /*
+            1- First, check exact dupes: Check if they have the same hash AND size in bytes AND vertical and hor resolution AND same extentions  (and maybe verify whether you need to confirm all that stuff, maybe some of these are unnecessary to check), if everything is the same, then take the one with the shorter name. 
+            
+            2- Compression: If the hamming distance is below the threshold (i.e., similar enough), 
+            Whichever has the greater size and resolution, we'll take it. But, if img A had lower size but higher res than img B, redirect it to manual review. 
+            
+            3- All Deleted pictures must be sent to a deletion directory. 
+            */
+            
+            if (newImageInfo.Length > existingImageInfo.Length)
+            {
+                // Checking vertical and horizontal resolution
+                Image newImage = Image.FromFile(newImagePath);
+                float newImageHorizontalResolution = newImage.HorizontalResolution;
+                float newImageVerticalResolution = newImage.VerticalResolution;
+                Console.WriteLine("New hor res: " + newImageHorizontalResolution);
+                Console.WriteLine("New ver res: " +newImageVerticalResolution);
 
-            // TODO: Do the comparisons mentioned in the javadoc
+                Image existingImage = Image.FromFile(existingImagePath);
+                float existingImageHorizontalResolution = existingImage.HorizontalResolution;
+                float existingImageVerticalResolution = existingImage.VerticalResolution;
+                Console.WriteLine("ex hor res: " + existingImageHorizontalResolution);
+                Console.WriteLine("ex ver res: " + existingImageVerticalResolution);
+
+                if (newImageHorizontalResolution > existingImageHorizontalResolution &&
+                    newImageVerticalResolution > existingImageVerticalResolution)
+                {
+                    // Final stage, confirming that the extensions are the same:
+                    string newImageExtension = newImagePath.Split(".").Last();
+                    string existingImageExtension = existingImagePath.Split(".").Last();
+
+                    if (newImageExtension.Equals(existingImageExtension))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        // Send to manual review and write a line in the log
+                        return false;
+                    } 
+                }
+                else
+                {
+                    // TODO: Send to deletion folder and write a line in the log
+                    Console.WriteLine("ERROR: Size larger but resolution is smaller: " + newImagePath);
+                    return false;
+                }
+            }
+            else 
+            {
+                // TODO: Send to deletion folder and write a line in the log
+                return false;
+            }
 
         }
         /*
@@ -260,8 +304,6 @@ namespace DuplicateImageDeletionTool
         */
     
     }
-
-
 
     /*
     /// <summary>
