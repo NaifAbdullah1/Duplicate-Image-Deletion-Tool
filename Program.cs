@@ -1,6 +1,12 @@
 ﻿/*
 TODO: 
 1- Add some kind of filtering where we're only checking images, use a long regex to only take in all image extensions. 
+
+
+The two main approaches you'll want to think about are: 
+1- OOP program: Makes it a lot easier to understand and code. But there would be questions on whether this will make the runtime so long. But also, we want to ask ourselves if the runtime difference is negligible. 
+
+2- Using only a hashmap with a <string, string> key-value pair where the key is the hash and the value is the image's path. 
 */
 
 
@@ -17,12 +23,6 @@ using System.Runtime.Serialization;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
-
-
-/*
-TODO: Formalize what you'll do with the images, implement how you'll move the images around in the replaceimagewithnewone funciton. 
-
-*/
 
 namespace DuplicateImageDeletionTool
 {
@@ -42,26 +42,33 @@ namespace DuplicateImageDeletionTool
         /// <param name="args">Command line arguments</param>
         static void Main(string[] args)
         {
-            Console.WriteLine("Provide the Absolute path of the folder "
-                + "containing \nthe images you want to remove duplicates from: ");
-
-            string? targetDirectory;
-            // Validate user input and prevent attacks (including injection attacks)
-            // Repeat the do-while loop and prompt user to try again? (true if the user enters invalid input)
-            string? sanitizedPath;
-            do
+            if (args.Length != 0)
             {
-                targetDirectory = Console.ReadLine();
-                sanitizedPath = IsUserInputValid(targetDirectory);
+                // TODO: Take the path the was provided in cmd line args
             }
-            while (sanitizedPath == null);
+            else
+            {
+                Console.WriteLine("Provide the Absolute path of the folder "
+                    + "containing \nthe images you want to remove duplicates from: ");
 
-            // Commence duplicate removal here: 
-            Console.WriteLine("Processing...");
+                string? targetDirectory;
+                // Validate user input and prevent attacks (including injection attacks)
+                // Repeat the do-while loop and prompt user to try again? (true if the user enters invalid input)
+                string? sanitizedPath;
+                do
+                {
+                    targetDirectory = Console.ReadLine();
+                    sanitizedPath = IsUserInputValid(targetDirectory);
+                }
+                while (sanitizedPath == null);
 
-            DeleteDuplicateImages(sanitizedPath);
+                // Commence duplicate removal here: 
+                Console.WriteLine("Processing...");
 
-            
+                DeleteDuplicateImages(sanitizedPath);
+            }
+
+
         }
 
         /// <summary>
@@ -112,7 +119,7 @@ namespace DuplicateImageDeletionTool
         {
             // Traverse a directory and its subdirectories. Results is a list 
             // of every image's path
-            List<string> pathsOfImagesToFilter = 
+            List<Image> pathsOfImagesToFilter =
                 TraverseTargetDirectory(sanitizedPath);
 
             // The directory in which we put deleted images
@@ -130,12 +137,13 @@ namespace DuplicateImageDeletionTool
 
             // Test
             report.Add(new Paragraph("kek master"));
-            
+
             // A hashmap containing the has of every image and the directory 
             // to the image associated with the hash
-            Dictionary<string, string> hashAndImagePathPairs = 
+            Dictionary<string, string> hashAndImagePathPairs =
                 new Dictionary<string, string>();
 
+            /*
             foreach (string newImagePath in pathsOfImagesToFilter.ToList())
             {
                 // Compute hash for image
@@ -155,16 +163,16 @@ namespace DuplicateImageDeletionTool
                         // Moving existing image to the deletion folder and write the report log
                         if (File.Exists(existingImagePath))
                         {
-                            File.Move(newImagePath, Path.Combine        (deletionDirectory, Path.GetFileName    (newImagePath)));
-                            Console.WriteLine(existingImagePath 
+                            File.Move(newImagePath, Path.Combine(deletionDirectory, Path.GetFileName(newImagePath)));
+                            Console.WriteLine(existingImagePath
                                 + " Has been moved to deletion folder.");
                         }
-                        
+
                         // Replacing
                         hashAndImagePathPairs[imageDHash] = newImagePath;
                     }
                 }
-                else 
+                else
                 {
                     hashAndImagePathPairs.Add(imageDHash, newImagePath);
                 }
@@ -172,7 +180,7 @@ namespace DuplicateImageDeletionTool
 
             // Now, we are to go over hashAndImagePathPairs and compute hamming distances and act accordingly. 
 
-
+            */
             report.Close();
         }
 
@@ -186,13 +194,44 @@ namespace DuplicateImageDeletionTool
         /// target directory.</param>
         /// <returns>The names of all the pictures found within the 
         /// directory and its sub-directories.</returns>
-        static List<string> TraverseTargetDirectory(string sanitizedPath)
+        static List<Image> TraverseTargetDirectory(string sanitizedPath)
         {
-            List<string> imagesFound = [];
+            List<Image> imagesFound = new List<Image>();
 
             // Adding the images in the current directory, the target one
             string[] picturePaths = Directory.GetFiles(sanitizedPath);
-            imagesFound.AddRange(picturePaths);
+
+            foreach (string path in picturePaths)
+            {
+                try
+                {
+                    using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+                    {
+                        using (SystemDrawingImage image = SystemDrawingImage.FromStream(stream, false, false))
+                        {
+                            imagesFound.Add(new Image(
+                    path,
+                    new FileInfo(path).Length,
+                    image.Height,
+                    image.Width,
+                    image.VerticalResolution,
+                    image.HorizontalResolution,
+                    ComputeImageDHash(path)));
+                        }
+                    }
+                }
+                catch (OutOfMemoryException ex)
+                {
+                    Console.WriteLine($"Error loading image: {path}. {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error processing image: {path}. {ex.Message}");
+
+                }
+
+
+            }
 
             // Getting the paths of subdirectories and exploring each one
             string[] subdirectories = Directory.GetDirectories(sanitizedPath);
@@ -200,14 +239,14 @@ namespace DuplicateImageDeletionTool
             {
                 imagesFound.AddRange(TraverseTargetDirectory(subdirectory));
             }
-            
+
             return imagesFound;
         }
 
         static string ComputeImageDHash(string imagePath)
         {
             // Opening the image as a Bitmap. "using" helps freeing up memory
-            using (Bitmap image = new Bitmap(imagePath)) 
+            using (Bitmap image = new Bitmap(imagePath))
             {
                 // Resizing image to 9x8 for dHash computation to standardize 
                 // the image size for dHash calculation. The bigger the
@@ -265,30 +304,30 @@ namespace DuplicateImageDeletionTool
             
             3- All Deleted pictures must be sent to a deletion directory. 
             */
-            
+
             if (newImageInfo.Length > existingImageInfo.Length)
             {
                 // Checking vertical and horizontal resolution
-                SystemDrawingImage newImage = 
+                SystemDrawingImage newImage =
                     SystemDrawingImage.FromFile(newImagePath);
-                float newImageHorizontalResolution = 
+                float newImageHorizontalResolution =
                     newImage.HorizontalResolution;
-                float newImageVerticalResolution = 
+                float newImageVerticalResolution =
                     newImage.VerticalResolution;
-                Console.WriteLine("New hor res: " 
+                Console.WriteLine("New hor res: "
                     + newImageHorizontalResolution);
-                Console.WriteLine("New ver res: " 
-                    +newImageVerticalResolution);
+                Console.WriteLine("New ver res: "
+                    + newImageVerticalResolution);
 
-                SystemDrawingImage existingImage = 
+                SystemDrawingImage existingImage =
                     SystemDrawingImage.FromFile(existingImagePath);
-                float existingImageHorizontalResolution = 
+                float existingImageHorizontalResolution =
                     existingImage.HorizontalResolution;
-                float existingImageVerticalResolution = 
+                float existingImageVerticalResolution =
                     existingImage.VerticalResolution;
-                Console.WriteLine("ex hor res: " 
+                Console.WriteLine("ex hor res: "
                     + existingImageHorizontalResolution);
-                Console.WriteLine("ex ver res: " 
+                Console.WriteLine("ex ver res: "
                     + existingImageVerticalResolution);
 
                 if (newImageHorizontalResolution > existingImageHorizontalResolution &&
@@ -306,18 +345,18 @@ namespace DuplicateImageDeletionTool
                     {
                         // Send to manual review and write a line in the log
                         return false;
-                    } 
+                    }
                 }
                 else
                 {
                     // TODO: Send new image to deletion folder and write a line in the log
                     // the log must indicate the directory of the existing image
-                    Console.WriteLine("ERROR: Size larger but resolution is "+
+                    Console.WriteLine("ERROR: Size larger but resolution is " +
                     "smaller: " + newImagePath);
                     return false;
                 }
             }
-            else 
+            else
             {
                 // Moving image to deletion directory
                 File.Move(newImagePath, Path.Combine(deletionDirectory, Path.GetFileName(newImagePath)));
@@ -352,10 +391,10 @@ namespace DuplicateImageDeletionTool
         }
     
         */
-    
+
     }
 
-    /*
+
     /// <summary>
     /// A class as a primary constructor representing each image in 
     /// the user-provided target directory
@@ -364,12 +403,16 @@ namespace DuplicateImageDeletionTool
     /// <param name="size">The size of the image in bytes</param>
     /// <param name="height">The height of the image in pixels</param>
     /// <param name="width">The height of the image in pixels</param>
-    class Image(string path, long size, int height, int width)
+    class Image(string path, long size, int height, int width, float verticalResolution, float horizontalResolution, string dHash)
     {
         public string Path { get; set; } = path;
         public long Size { get; set; } = size;
         public int Height { get; set; } = height;
         public int Width { get; set; } = width;
+        public float VerticalResolution { get; set; } = verticalResolution;
+        public float HorizontalResolution { get; set; } = horizontalResolution;
+        public List<Image> SimilarImages { get; set; } = new List<Image>();
+        public string DHash { get; set; } = dHash;
     }
-    */
+
 }
