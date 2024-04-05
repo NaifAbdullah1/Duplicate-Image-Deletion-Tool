@@ -1,13 +1,6 @@
 ﻿/*
-Edge cases to consider: 
-1- Two images that have the same size and quality, but different extensions
-2- Image is lower in quality but have a higher size
-
-
-Parameters to use when comparing images: 
-1- The image with the greater size
-2- The image with the higher resolution
-3- The image with the greater dimensions
+TODO: 
+1- Add some kind of filtering where we're only checking images, use a long regex to only take in all image extensions. 
 */
 
 
@@ -17,9 +10,19 @@ using System.IO;
 using System.Collections.Generic;
 //using System.Security.Cryptography;
 
+using SystemDrawingImage = System.Drawing.Image;
 using System.Drawing;
 using System.Runtime.Serialization;
 
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+
+
+/*
+TODO: Formalize what you'll do with the images, implement how you'll move the images around in the replaceimagewithnewone funciton. 
+
+*/
 
 namespace DuplicateImageDeletionTool
 {
@@ -109,17 +112,34 @@ namespace DuplicateImageDeletionTool
         {
             // Traverse a directory and its subdirectories. Results is a list 
             // of every image's path
-            List<string> pathsOfImagesToFilter = TraverseTargetDirectory(sanitizedPath);
+            List<string> pathsOfImagesToFilter = 
+                TraverseTargetDirectory(sanitizedPath);
 
+            // The directory in which we put deleted images
+            string deletionDirectory = $"{sanitizedPath}/DELETED";
+            if (!Directory.Exists(deletionDirectory))
+            {
+                Directory.CreateDirectory(deletionDirectory);
+                Console.WriteLine("Directory created!");
+            }
+
+            // The PDF report with the details of was was deleted
+            PdfWriter pdfWriter = new PdfWriter($"{deletionDirectory}/report.pdf");
+            PdfDocument pdfDocument = new PdfDocument(pdfWriter);
+            Document report = new Document(pdfDocument);
+
+            // Test
+            report.Add(new Paragraph("kek master"));
             
             // A hashmap containing the has of every image and the directory 
             // to the image associated with the hash
-            Dictionary<string, string> hashAndImagePathPairs = new Dictionary<string, string>();
+            Dictionary<string, string> hashAndImagePathPairs = 
+                new Dictionary<string, string>();
 
-            foreach (string imagePath in pathsOfImagesToFilter)
+            foreach (string newImagePath in pathsOfImagesToFilter.ToList())
             {
                 // Compute hash for image
-                string imageDHash = ComputeImageDHash(imagePath);
+                string imageDHash = ComputeImageDHash(newImagePath);
 
                 // In the event an image with an identical hash was found, 
                 // We'll do further checks to determine which one to take. 
@@ -128,22 +148,32 @@ namespace DuplicateImageDeletionTool
                     // hashAndImagePathPairs[imageDHash] -> Existing image's path
                     // By "Existing", we're referring to images already 
                     // in hashAndImagePathPairs. imagePath -> Contains new image's path
-                    if (ReplaceExistingImageWithTheNewOne(hashAndImagePathPairs[imageDHash], imagePath))
+                    string existingImagePath = hashAndImagePathPairs[imageDHash];
+                    if (ReplaceExistingImageWithTheNewOne(
+                        existingImagePath, newImagePath, deletionDirectory, report, pathsOfImagesToFilter))
                     {
-                        // TODO: Before you replace the image, move the existing image to the deletion folder and write the report log
+                        // Moving existing image to the deletion folder and write the report log
+                        if (File.Exists(existingImagePath))
+                        {
+                            File.Move(newImagePath, Path.Combine        (deletionDirectory, Path.GetFileName    (newImagePath)));
+                            Console.WriteLine(existingImagePath 
+                                + " Has been moved to deletion folder.");
+                        }
+                        
                         // Replacing
-                        hashAndImagePathPairs[imageDHash] = imagePath; 
+                        hashAndImagePathPairs[imageDHash] = newImagePath;
                     }
                 }
                 else 
                 {
-                    hashAndImagePathPairs.Add(imageDHash, imagePath);
+                    hashAndImagePathPairs.Add(imageDHash, newImagePath);
                 }
             }
 
             // Now, we are to go over hashAndImagePathPairs and compute hamming distances and act accordingly. 
 
 
+            report.Close();
         }
 
         /// <summary>
@@ -222,7 +252,8 @@ namespace DuplicateImageDeletionTool
         /// potentially adding to the hashmap</param>
         /// <returns>Returns true if the two conditions above are met.
         /// Returns false otherwise.</returns>
-        static bool ReplaceExistingImageWithTheNewOne(string existingImagePath, string newImagePath)
+        static bool ReplaceExistingImageWithTheNewOne(string existingImagePath,
+            string newImagePath, string deletionDirectory, Document report, List<String> pathsOfImagesToFilter)
         {
             FileInfo existingImageInfo = new FileInfo(existingImagePath);
             FileInfo newImageInfo = new FileInfo(newImagePath);
@@ -238,17 +269,27 @@ namespace DuplicateImageDeletionTool
             if (newImageInfo.Length > existingImageInfo.Length)
             {
                 // Checking vertical and horizontal resolution
-                Image newImage = Image.FromFile(newImagePath);
-                float newImageHorizontalResolution = newImage.HorizontalResolution;
-                float newImageVerticalResolution = newImage.VerticalResolution;
-                Console.WriteLine("New hor res: " + newImageHorizontalResolution);
-                Console.WriteLine("New ver res: " +newImageVerticalResolution);
+                SystemDrawingImage newImage = 
+                    SystemDrawingImage.FromFile(newImagePath);
+                float newImageHorizontalResolution = 
+                    newImage.HorizontalResolution;
+                float newImageVerticalResolution = 
+                    newImage.VerticalResolution;
+                Console.WriteLine("New hor res: " 
+                    + newImageHorizontalResolution);
+                Console.WriteLine("New ver res: " 
+                    +newImageVerticalResolution);
 
-                Image existingImage = Image.FromFile(existingImagePath);
-                float existingImageHorizontalResolution = existingImage.HorizontalResolution;
-                float existingImageVerticalResolution = existingImage.VerticalResolution;
-                Console.WriteLine("ex hor res: " + existingImageHorizontalResolution);
-                Console.WriteLine("ex ver res: " + existingImageVerticalResolution);
+                SystemDrawingImage existingImage = 
+                    SystemDrawingImage.FromFile(existingImagePath);
+                float existingImageHorizontalResolution = 
+                    existingImage.HorizontalResolution;
+                float existingImageVerticalResolution = 
+                    existingImage.VerticalResolution;
+                Console.WriteLine("ex hor res: " 
+                    + existingImageHorizontalResolution);
+                Console.WriteLine("ex ver res: " 
+                    + existingImageVerticalResolution);
 
                 if (newImageHorizontalResolution > existingImageHorizontalResolution &&
                     newImageVerticalResolution > existingImageVerticalResolution)
@@ -269,14 +310,23 @@ namespace DuplicateImageDeletionTool
                 }
                 else
                 {
-                    // TODO: Send to deletion folder and write a line in the log
-                    Console.WriteLine("ERROR: Size larger but resolution is smaller: " + newImagePath);
+                    // TODO: Send new image to deletion folder and write a line in the log
+                    // the log must indicate the directory of the existing image
+                    Console.WriteLine("ERROR: Size larger but resolution is "+
+                    "smaller: " + newImagePath);
                     return false;
                 }
             }
             else 
             {
-                // TODO: Send to deletion folder and write a line in the log
+                // Moving image to deletion directory
+                File.Move(newImagePath, Path.Combine(deletionDirectory, Path.GetFileName(newImagePath)));
+
+                pathsOfImagesToFilter.Remove(newImagePath);
+
+                // Writing a log in the report
+                report.Add(new Paragraph($"{newImagePath} -- was an exact duplicate of {existingImagePath} \nSent to DELETION."));
+
                 return false;
             }
 

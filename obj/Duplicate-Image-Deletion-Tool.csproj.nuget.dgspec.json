@@ -46,6 +46,14 @@
             "System.Drawing.Common": {
               "target": "Package",
               "version": "[8.0.3, )"
+            },
+            "itext7": {
+              "target": "Package",
+              "version": "[8.0.3, )"
+            },
+            "itext7.bouncy-castle-adapter": {
+              "target": "Package",
+              "version": "[8.0.3, )"
             }
           },
           "imports": [
