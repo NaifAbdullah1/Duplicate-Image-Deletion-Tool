@@ -23,6 +23,7 @@ using System.Runtime.Serialization;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DuplicateImageDeletionTool
 {
@@ -119,7 +120,7 @@ namespace DuplicateImageDeletionTool
         {
             // Traverse a directory and its subdirectories. Results is a list 
             // of every image's path
-            List<Image> pathsOfImagesToFilter =
+            List<Image> imagesToFilter =
                 TraverseTargetDirectory(sanitizedPath);
 
             // The directory in which we put deleted images
@@ -135,13 +136,33 @@ namespace DuplicateImageDeletionTool
             PdfDocument pdfDocument = new PdfDocument(pdfWriter);
             Document report = new Document(pdfDocument);
 
-            // Test
-            report.Add(new Paragraph("kek master"));
+
+            // Going through all the images in a O(N^2) complexity to populate the SimilarImages variable for each image
+
+            // Indicates if an image is similar to another
+            const int HammingThreshold = 10;
+            foreach (Image imageA in imagesToFilter)
+            {
+                foreach (Image imageB in imagesToFilter)
+                {
+                    if (!imageA.Path.Equals(imageB.Path) && imageA.SimilarToAnotherImage == false)
+                    {
+                        int hammingDistance = ComputeHammingDistance(imageA.DHash, imageB.DHash);
+                        if (hammingDistance < HammingThreshold) // Similarity detected? 
+                        {
+                            imageA.SimilarImages.Add(imageB);
+                            imageB.SimilarToAnotherImage = true;
+                        }
+                    }
+                }
+            }
+
+            imagesToFilter.RemoveAll(image => image.SimilarToAnotherImage);
+            Console.WriteLine("Done");
 
             // A hashmap containing the has of every image and the directory 
             // to the image associated with the hash
-            Dictionary<string, string> hashAndImagePathPairs =
-                new Dictionary<string, string>();
+            //Dictionary<string, string> hashAndImagePathPairs = new Dictionary<string, string>();
 
             /*
             foreach (string newImagePath in pathsOfImagesToFilter.ToList())
@@ -229,8 +250,6 @@ namespace DuplicateImageDeletionTool
                     Console.WriteLine($"Error processing image: {path}. {ex.Message}");
 
                 }
-
-
             }
 
             // Getting the paths of subdirectories and exploring each one
@@ -239,7 +258,6 @@ namespace DuplicateImageDeletionTool
             {
                 imagesFound.AddRange(TraverseTargetDirectory(subdirectory));
             }
-
             return imagesFound;
         }
 
@@ -392,6 +410,23 @@ namespace DuplicateImageDeletionTool
     
         */
 
+        static int ComputeHammingDistance(string hashA, string hashB)
+        {
+            if (hashA.Length != hashB.Length)
+            {
+                throw new ArgumentException($"Error: Encountered two hashes that are unequal in length.");
+            }
+
+            int distance = 0;
+            for (int i = 0; i < hashA.Length; i++)
+            {
+                if (hashA[i] != hashB[i])
+                {
+                    distance++;
+                }
+            }
+            return distance;
+        }
     }
 
 
@@ -402,8 +437,12 @@ namespace DuplicateImageDeletionTool
     /// <param name="path">The absolute path to the image</param>
     /// <param name="size">The size of the image in bytes</param>
     /// <param name="height">The height of the image in pixels</param>
-    /// <param name="width">The height of the image in pixels</param>
-    class Image(string path, long size, int height, int width, float verticalResolution, float horizontalResolution, string dHash)
+    /// <param name="width">The width of the image in pixels</param>
+    /// <param name="verticalResolution">Vertical Resolution of the image</param>
+    /// <param name="horizontalResolution">Horizontal Resolution of the image</param>
+    /// <param name="dHash">dHash of this image</param>
+    /// <param name="similarToAnotherImage">Prevents an image from having any similar images in its list if it's already similar to another one.</param>
+    class Image(string path, long size, int height, int width, float verticalResolution, float horizontalResolution, string dHash, bool similarToAnotherImage = false)
     {
         public string Path { get; set; } = path;
         public long Size { get; set; } = size;
@@ -413,6 +452,43 @@ namespace DuplicateImageDeletionTool
         public float HorizontalResolution { get; set; } = horizontalResolution;
         public List<Image> SimilarImages { get; set; } = new List<Image>();
         public string DHash { get; set; } = dHash;
+
+        public bool SimilarToAnotherImage {get; set;} = similarToAnotherImage;
+
+        /// <summary>
+        /// Two images are exactly equal if all of their parameters are the same except the list of similar images and the paths
+        /// </summary>
+        /// <param name="imageA">The first image to compare</param>
+        /// <param name="imageB">The second image to compare</param>
+        /// <returns>True if they're identical, false otherwise</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool Equals(Image otherImage)
+        {
+
+            if (Size == otherImage.Size
+            && Height == otherImage.Height
+            && Width == otherImage.Width
+            && VerticalResolution == otherImage.VerticalResolution
+            && HorizontalResolution == otherImage.HorizontalResolution
+            && DHash == otherImage.DHash)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// NOT IMPLEMENTED
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public int GetHashCode([DisallowNull] Image obj)
+        {
+            return int.Parse(DHash);
+        }
     }
 
 }
