@@ -464,30 +464,12 @@ namespace DuplicateImageDeletionTool
         /// <exception cref="NotImplementedException"></exception>
         public bool Equals(Image otherImage)
         {
-
-            if (Size == otherImage.Size
+            return Size == otherImage.Size
             && Height == otherImage.Height
             && Width == otherImage.Width
             && VerticalResolution == otherImage.VerticalResolution
             && HorizontalResolution == otherImage.HorizontalResolution
-            && DHash == otherImage.DHash)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// NOT IMPLEMENTED
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public int GetHashCode([DisallowNull] Image obj)
-        {
-            return int.Parse(DHash);
+            && DHash == otherImage.DHash;
         }
     }
 
