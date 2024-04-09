@@ -20,10 +20,16 @@ using SystemDrawingImage = System.Drawing.Image;
 using System.Drawing;
 using System.Runtime.Serialization;
 
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
+
+
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
 using System.Diagnostics.CodeAnalysis;
+using System.Data.Common;
 
 namespace DuplicateImageDeletionTool
 {
@@ -226,19 +232,16 @@ namespace DuplicateImageDeletionTool
             {
                 try
                 {
-                    using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+                    using (Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(path))
                     {
-                        using (SystemDrawingImage image = SystemDrawingImage.FromStream(stream, false, false))
-                        {
-                            imagesFound.Add(new Image(
-                    path,
-                    new FileInfo(path).Length,
-                    image.Height,
-                    image.Width,
-                    image.VerticalResolution,
-                    image.HorizontalResolution,
-                    ComputeImageDHash(path)));
-                        }
+                        imagesFound.Add(new Image(
+                            path,
+                            new FileInfo(path).Length,
+                            image.Height,
+                            image.Width,
+                            image.Metadata.VerticalResolution,
+                            image.Metadata.HorizontalResolution,
+                            ComputeImageDHash(path)));
                     }
                 }
                 catch (OutOfMemoryException ex)
@@ -270,7 +273,7 @@ namespace DuplicateImageDeletionTool
                 // the image size for dHash calculation. The bigger the
                 // size (e.g., 16x15), the more accurate the comparison will be
                 // at the cost of a longer runtime
-                Bitmap resizedImage = new Bitmap(image, new Size(9, 8)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
+                Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(9, 8)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
 
                 // Computing dHash
                 /*
@@ -442,18 +445,20 @@ namespace DuplicateImageDeletionTool
     /// <param name="horizontalResolution">Horizontal Resolution of the image</param>
     /// <param name="dHash">dHash of this image</param>
     /// <param name="similarToAnotherImage">Prevents an image from having any similar images in its list if it's already similar to another one.</param>
-    class Image(string path, long size, int height, int width, float verticalResolution, float horizontalResolution, string dHash, bool similarToAnotherImage = false)
+    class Image(string path, long size, int height, int width, double verticalResolution, double horizontalResolution, string dHash, bool similarToAnotherImage = false)
     {
         public string Path { get; set; } = path;
         public long Size { get; set; } = size;
         public int Height { get; set; } = height;
         public int Width { get; set; } = width;
-        public float VerticalResolution { get; set; } = verticalResolution;
-        public float HorizontalResolution { get; set; } = horizontalResolution;
+        public double VerticalResolution { get; set; } = verticalResolution;
+        public double HorizontalResolution { get; set; } = horizontalResolution;
         public List<Image> SimilarImages { get; set; } = new List<Image>();
         public string DHash { get; set; } = dHash;
+        public bool SimilarToAnotherImage { get; set; } = similarToAnotherImage;
 
-        public bool SimilarToAnotherImage {get; set;} = similarToAnotherImage;
+        // Add a property to store the ImageSharp Image instance
+        //public Image<Rgba32> ImageSharpImage { get; set; } = SixLabors.ImageSharp.Image.Load<Rgba32>(path).Clone();
 
         /// <summary>
         /// Two images are exactly equal if all of their parameters are the same except the list of similar images and the paths
