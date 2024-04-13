@@ -43,6 +43,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "HeyRed.ImageSharp.Heif": {
+              "target": "Package",
+              "version": "[2.1.3, )"
+            },
             "SixLabors.ImageSharp": {
               "target": "Package",
               "version": "[3.1.3, )"
