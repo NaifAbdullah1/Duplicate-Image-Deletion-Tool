@@ -261,7 +261,7 @@ namespace DuplicateImageDeletionTool
                 // the image size for dHash calculation. The bigger the
                 // size (e.g., 16x15), the more accurate the comparison will be
                 // at the cost of a longer runtime
-                Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(9, 8)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
+                Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(81, 64)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
 
                 // Computing dHash
                 /*
