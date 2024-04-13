@@ -144,7 +144,7 @@ namespace DuplicateImageDeletionTool
 
 
             // Going through all the images in a O(N^2) complexity to populate the SimilarImages variable for each image
-
+ 
             // Indicates if an image is similar to another
             const int HammingThreshold = 10;
             foreach (Image imageA in imagesToFilter)
