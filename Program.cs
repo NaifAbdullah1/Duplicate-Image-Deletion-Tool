@@ -144,7 +144,7 @@ namespace DuplicateImageDeletionTool
 
 
             // Going through all the images in a O(N^2) complexity to populate the SimilarImages variable for each image
- 
+
             // Indicates if an image is similar to another
             const int HammingThreshold = 10;
             foreach (Image imageA in imagesToFilter)
@@ -208,7 +208,7 @@ namespace DuplicateImageDeletionTool
                             Console.WriteLine("Directory created for unsupported images.");
                         }
                         // Move
-                        try 
+                        try
                         {
                             File.Move(path, Path.Combine(unsupportedImagesDirectory, Path.GetFileName(path)));
                             Console.WriteLine("An unsupported image has been moved to the unsupported directory: " + path);
@@ -261,7 +261,7 @@ namespace DuplicateImageDeletionTool
                 // the image size for dHash calculation. The bigger the
                 // size (e.g., 16x15), the more accurate the comparison will be
                 // at the cost of a longer runtime
-                Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(81, 64)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
+                Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(32, 32)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
 
                 // Computing dHash
                 /*
@@ -280,12 +280,22 @@ namespace DuplicateImageDeletionTool
                 {
                     for (int x = 0; x < resizedImage.Width - 1; x++)
                     {
-                        hash += (resizedImage.GetPixel(x, y).GetBrightness() > resizedImage.GetPixel(x + 1, y).GetBrightness()) ? "1" : "0";
+                        // Enhance sensitivity by considering more information, such as color intensity or multiple channels
+                        hash += (GetIntensity(resizedImage.GetPixel(x, y)) > GetIntensity(resizedImage.GetPixel(x + 1, y))) ? "1" : "0";
+
                     }
                 }
 
                 return hash;
             }
+        }
+
+        // Helper function to calculate intensity (brightness) of a color
+        static double GetIntensity(System.Drawing.Color color)
+        {
+            // Calculate intensity as a weighted sum of RGB components
+            // You can experiment with different weightings to reflect human perception better
+            return 0.299 * color.R + 0.587 * color.G + 0.114 * color.B;
         }
 
         static int ComputeHammingDistance(string hashA, string hashB)
