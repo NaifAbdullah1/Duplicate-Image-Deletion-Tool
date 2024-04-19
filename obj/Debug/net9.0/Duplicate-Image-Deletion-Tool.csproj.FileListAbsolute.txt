@@ -44,6 +44,4 @@ C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\itext.bouncy-
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\SixLabors.ImageSharp.dll
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\ImageSharp.Heif.dll
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\LibHeifSharp.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\AForge.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\AForge.Imaging.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\AForge.Math.dll
+C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\CoenM.ImageSharp.ImageHash.dll

@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "s0jG1z4F/bIGXSQWt4OrvzVIryJ5mxvrD60K2vrQTebIIC601yp4qu9AucfUMfmNt6xQj+MW78lrrji8ewMJYA==",
+  "dgSpecHash": "YD5K0BD59CQ5tvFC1TgbQpSr4AcX6AQ4zDPou3HCLwwSv3CSkHfHJt5uvh1aJf9B+6MQW26r1Zop7NyZg3ZkRg==",
   "success": true,
   "projectFilePath": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\Duplicate-Image-Deletion-Tool.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Naif-\\.nuget\\packages\\bouncycastle.cryptography\\2.2.1\\bouncycastle.cryptography.2.2.1.nupkg.sha512",
+    "C:\\Users\\Naif-\\.nuget\\packages\\coenm.imagesharp.imagehash\\1.3.6\\coenm.imagesharp.imagehash.1.3.6.nupkg.sha512",
     "C:\\Users\\Naif-\\.nuget\\packages\\heyred.imagesharp.heif\\2.1.3\\heyred.imagesharp.heif.2.1.3.nupkg.sha512",
     "C:\\Users\\Naif-\\.nuget\\packages\\itext\\8.0.3\\itext.8.0.3.nupkg.sha512",
     "C:\\Users\\Naif-\\.nuget\\packages\\itext.bouncy-castle-adapter\\8.0.3\\itext.bouncy-castle-adapter.8.0.3.nupkg.sha512",

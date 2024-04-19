@@ -43,6 +43,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "CoenM.ImageSharp.ImageHash": {
+              "target": "Package",
+              "version": "[1.3.6, )"
+            },
             "HeyRed.ImageSharp.Heif": {
               "target": "Package",
               "version": "[2.1.3, )"
