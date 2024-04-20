@@ -7,6 +7,8 @@ The two main approaches you'll want to think about are:
 1- OOP program: Makes it a lot easier to understand and code. But there would be questions on whether this will make the runtime so long. But also, we want to ask ourselves if the runtime difference is negligible. 
 
 2- Using only a hashmap with a <string, string> key-value pair where the key is the hash and the value is the image's path. 
+
+If two images are identical, make sure to compare the other attributes such as resolution 
 */
 
 
@@ -75,7 +77,7 @@ namespace DuplicateImageDeletionTool
                 // Commence duplicate removal here: 
                 Console.WriteLine("Processing...");
 
-                //DeleteDuplicateImages(sanitizedPath, parentDirectory);
+                DeleteDuplicateImages(sanitizedPath, parentDirectory);
 
 
                 /* 
@@ -370,7 +372,7 @@ namespace DuplicateImageDeletionTool
                             image.Width,
                             image.Metadata.VerticalResolution,
                             image.Metadata.HorizontalResolution,
-                            CalculatePerceptualHash(new Bitmap (path))));
+                            CalculatePerceptualHash(new Bitmap(path))));
                     }
                 }
                 catch (OutOfMemoryException ex)
