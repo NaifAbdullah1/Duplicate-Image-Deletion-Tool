@@ -12,25 +12,13 @@ If two images are identical, make sure to compare the other attributes such as r
 */
 
 
-
-using System;
-using System.IO;
-using System.Collections.Generic;
-
-using SystemDrawingImage = System.Drawing.Image;
 using System.Drawing;
-using System.Runtime.Serialization;
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-using CoenM.ImageHash;
-using CoenM.ImageHash.HashAlgorithms;
-
-
 using iText.Kernel.Pdf;
 using iText.Layout;
-using iText.Layout.Element;
 using System.Text.RegularExpressions;
 
 
@@ -77,52 +65,21 @@ namespace DuplicateImageDeletionTool
                 // Commence duplicate removal here: 
                 Console.WriteLine("Processing...");
 
-                DeleteDuplicateImages(sanitizedPath, parentDirectory);
+                // Traverse a directory and its subdirectories. Results is a list of every image's path
+                List<Image> imagesToFilter =
+                TraverseTargetDirectory(sanitizedPath, parentDirectory);
 
+                DeleteDuplicateImages(sanitizedPath, parentDirectory, imagesToFilter);
 
-                /* 
-                var hashAlgo = new AverageHash();
-
-                string img1 = "C:\\Users\\Naif-\\Desktop\\ph - Copy\\3\\IMG_0251.JPG";
-                string img2 = "C:\\Users\\Naif-\\Desktop\\ph - Copy\\IMG_9878.JPG";
-
-                using var stream1 = File.OpenHandle(img1);
-                using var stream2 = File.OpenHandle(img2);
-
-                ulong image1Hash = hashAlgo.Hash(SixLabors.ImageSharp.Image.Load<Rgba32>(img1));
-                ulong image2Hash = hashAlgo.Hash(SixLabors.ImageSharp.Image.Load<Rgba32>(img2));
-
-                Console.WriteLine("#######################");
-                Console.WriteLine(image1Hash);
-                Console.WriteLine(image2Hash);
-                double percentageImageSimilarity = CompareHash.Similarity(image1Hash, image2Hash);
-                Console.WriteLine(percentageImageSimilarity);
-                */
-
-                // Load the images
-                Bitmap image1 = new Bitmap("C:\\Users\\Naif-\\Desktop\\ph\\New folder\\IMG_9905.jpg");
-                Bitmap image2 = new Bitmap("C:\\Users\\Naif-\\Desktop\\ph\\New folder\\IMG_0797.png");
-
-                // Calculate the perceptual hashes for both images
-                string hash1 = CalculatePerceptualHash(image1);
-                string hash2 = CalculatePerceptualHash(image2);
-
-                // SEEMS LIKE 65% is the optimal threshold, anything above that is visually similar, otherwise not similar. 
-
-                // Compare the hashes and calculate the similarity score
-                double similarityScore = CalculateSimilarityScore(hash1, hash2);
-
-                // Output the similarity score as a percentage
-                Console.WriteLine("Similarity Score: " + similarityScore.ToString("0.00") + "%");
-
-
+                Console.WriteLine("Done");
             }
-
-
-
         }
 
-        // Calculate the perceptual hash for an image
+        /// <summary>
+        /// Calculate the perceptual hash for an image
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
         static string CalculatePerceptualHash(Bitmap image)
         {
             // Resize the image to a fixed size
@@ -140,13 +97,23 @@ namespace DuplicateImageDeletionTool
             return hash;
         }
 
-        // Resize the image to a fixed size
+        /// <summary>
+        /// Resize the image to a fixed size
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
         static Bitmap ResizeImage(Bitmap image, int width, int height)
         {
             return new Bitmap(image, new System.Drawing.Size(width, height));
         }
 
-        // Convert the image to grayscale
+        /// <summary>
+        /// Convert the image to grayscale
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
         static Bitmap ToGrayscale(Bitmap image)
         {
             Bitmap grayscaleImage = new Bitmap(image.Width, image.Height);
@@ -164,7 +131,11 @@ namespace DuplicateImageDeletionTool
             return grayscaleImage;
         }
 
-        // Calculate the average pixel value of the grayscale image
+        /// <summary>
+        /// Calculate the average pixel value of the grayscale image
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
         static double CalculateAveragePixelValue(Bitmap image)
         {
             double sum = 0;
@@ -180,7 +151,12 @@ namespace DuplicateImageDeletionTool
             return sum / (image.Width * image.Height);
         }
 
-        // Compute the hash based on the image's pixel values and average value
+        /// <summary>
+        /// Compute the hash based on the image's pixel values and average value
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="averagePixelValue"></param>
+        /// <returns></returns>
         static string ComputeHash(Bitmap image, double averagePixelValue)
         {
             string hash = "";
@@ -196,7 +172,13 @@ namespace DuplicateImageDeletionTool
             return hash;
         }
 
-        // Calculate the similarity score between two hashes
+        /// <summary>
+        /// Calculate the similarity score between two hashes
+        /// </summary>
+        /// <param name="hash1">hash of the first image to compare</param>
+        /// <param name="hash2">hash of the 2nd image to compare</param>
+        /// <returns>Similarity score in percentage</returns>
+        /// <exception cref="ArgumentException"></exception>
         static double CalculateSimilarityScore(string hash1, string hash2)
         {
             if (hash1.Length != hash2.Length)
@@ -218,8 +200,6 @@ namespace DuplicateImageDeletionTool
 
             return similarityScore;
         }
-
-
 
         /// <summary>
         /// This method prevents attacks such as directory traversal attacks 
@@ -265,13 +245,14 @@ namespace DuplicateImageDeletionTool
             }
         }
 
-        static void DeleteDuplicateImages(string sanitizedPath, string parentDirectory)
+        /// <summary>
+        /// Deletes duplicate images
+        /// </summary>
+        /// <param name="sanitizedPath">Target directory in which we're looking for images</param>
+        /// <param name="parentDirectory">A constant, the parent-most target directory</param>
+        /// <param name="imagesToFilter">A list of image objects. The images to filter.</param>
+        static void DeleteDuplicateImages(string sanitizedPath, string parentDirectory, List<Image> imagesToFilter)
         {
-            // Traverse a directory and its subdirectories. Results is a list 
-            // of every image's path
-            List<Image> imagesToFilter =
-                TraverseTargetDirectory(sanitizedPath, parentDirectory);
-
             // The directory in which we put deleted images
             string deletionDirectory = $"{parentDirectory}/DELETED";
             if (!Directory.Exists(deletionDirectory))
@@ -292,24 +273,29 @@ namespace DuplicateImageDeletionTool
             const double SimilarityThreshold = 65;
             foreach (Image imageA in imagesToFilter)
             {
-                foreach (Image imageB in imagesToFilter)
+                if (imageA.SimilarToAnotherImage)
                 {
-                    if (!imageA.Path.Equals(imageB.Path) && imageA.SimilarToAnotherImage == false)
+                    continue;
+                }
+                else
+                {
+                    foreach (Image imageB in imagesToFilter)
                     {
-                        double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
-                        if (similarityScore >= SimilarityThreshold) // Similarity detected? 
+                        if (!imageA.Path.Equals(imageB.Path) && imageB.SimilarToAnotherImage == false)
                         {
-                            imageA.SimilarImages.Add(imageB);
-                            imageB.SimilarToAnotherImage = true;
+                            double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
+                            if (similarityScore >= SimilarityThreshold) // Similarity detected? 
+                            {
+                                imageA.SimilarImages.Add(imageB);
+                                imageB.SimilarToAnotherImage = true;
+                            }
                         }
                     }
                 }
             }
 
             imagesToFilter.RemoveAll(image => image.SimilarToAnotherImage);
-            Console.WriteLine("Done");
-
-
+            
             report.Close();
         }
 
@@ -395,80 +381,11 @@ namespace DuplicateImageDeletionTool
             return imagesFound;
         }
 
-
-        // Deprecated
-        /*
-        static string ComputeImageDHash(string imagePath)
-        {
-            // Opening the image as a Bitmap. "using" helps freeing up memory
-            using (Bitmap image = new Bitmap(imagePath))
-            {
-                // Resizing image to 9x8 for dHash computation to standardize 
-                // the image size for dHash calculation. The bigger the
-                // size (e.g., 16x15), the more accurate the comparison will be
-                // at the cost of a longer runtime
-                Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(32, 32)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
-
-                // Computing dHash
-                /*
-                Iterating over the pixels of the resized image to compute the 
-                dHash. For each row of pixels, it compares the brightness of 
-                each pixel with the brightness of the next pixel in the row. 
-                If the brightness of the current pixel is greater than the 
-                brightness of the next pixel, it appends "1" to the hash; 
-                otherwise, it appends "0". This process generates a binary 
-                string representing the dHash of the image.
-                Brightness comparison helps capture the edge information 
-                and basic structure of the image.
-                
-                string hash = "";
-                for (int y = 0; y < resizedImage.Height; y++)
-                {
-                    for (int x = 0; x < resizedImage.Width - 1; x++)
-                    {
-                        // Enhance sensitivity by considering more information, such as color intensity or multiple channels
-                        hash += (GetIntensity(resizedImage.GetPixel(x, y)) > GetIntensity(resizedImage.GetPixel(x + 1, y))) ? "1" : "0";
-
-                    }
-                }
-
-                return hash;
-            }
-        }
-        */
-
-
-
-        // Helper function to calculate intensity (brightness) of a color
-        /*
-        static double GetIntensity(System.Drawing.Color color)
-        {
-            // Calculate intensity as a weighted sum of RGB components
-            // You can experiment with different weightings to reflect human perception better
-            return 0.299 * color.R + 0.587 * color.G + 0.114 * color.B;
-        }
-        */
-
-        /*
-        static int ComputeHammingDistance(string hashA, string hashB)
-        {
-            if (hashA.Length != hashB.Length)
-            {
-                throw new ArgumentException($"Error: Encountered two hashes that are unequal in length.");
-            }
-
-            int distance = 0;
-            for (int i = 0; i < hashA.Length; i++)
-            {
-                if (hashA[i] != hashB[i])
-                {
-                    distance++;
-                }
-            }
-            return distance;
-        }
-        */
-
+        /// <summary>
+        /// Given an absolute path of a file, this function returns the extension of that file. 
+        /// </summary>
+        /// <param name="path">Absolute path</param>
+        /// <returns>a string containing the extension of the file.</returns>
         static string GetExtension(string path)
         {
             return Path.GetExtension(path);
@@ -522,3 +439,75 @@ namespace DuplicateImageDeletionTool
     }
 
 }
+
+
+// Deprecated
+/*
+static string ComputeImageDHash(string imagePath)
+{
+    // Opening the image as a Bitmap. "using" helps freeing up memory
+    using (Bitmap image = new Bitmap(imagePath))
+    {
+        // Resizing image to 9x8 for dHash computation to standardize 
+        // the image size for dHash calculation. The bigger the
+        // size (e.g., 16x15), the more accurate the comparison will be
+        // at the cost of a longer runtime
+        Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(32, 32)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
+
+        // Computing dHash
+        /*
+        Iterating over the pixels of the resized image to compute the 
+        dHash. For each row of pixels, it compares the brightness of 
+        each pixel with the brightness of the next pixel in the row. 
+        If the brightness of the current pixel is greater than the 
+        brightness of the next pixel, it appends "1" to the hash; 
+        otherwise, it appends "0". This process generates a binary 
+        string representing the dHash of the image.
+        Brightness comparison helps capture the edge information 
+        and basic structure of the image.
+
+        string hash = "";
+        for (int y = 0; y < resizedImage.Height; y++)
+        {
+            for (int x = 0; x < resizedImage.Width - 1; x++)
+            {
+                // Enhance sensitivity by considering more information, such as color intensity or multiple channels
+                hash += (GetIntensity(resizedImage.GetPixel(x, y)) > GetIntensity(resizedImage.GetPixel(x + 1, y))) ? "1" : "0";
+
+            }
+        }
+
+        return hash;
+    }
+}
+*/
+
+// Helper function to calculate intensity (brightness) of a color
+/*
+static double GetIntensity(System.Drawing.Color color)
+{
+    // Calculate intensity as a weighted sum of RGB components
+    // You can experiment with different weightings to reflect human perception better
+    return 0.299 * color.R + 0.587 * color.G + 0.114 * color.B;
+}
+*/
+
+/*
+static int ComputeHammingDistance(string hashA, string hashB)
+{
+    if (hashA.Length != hashB.Length)
+    {
+        throw new ArgumentException($"Error: Encountered two hashes that are unequal in length.");
+    }
+
+    int distance = 0;
+    for (int i = 0; i < hashA.Length; i++)
+    {
+        if (hashA[i] != hashB[i])
+        {
+            distance++;
+        }
+    }
+    return distance;
+}
+*/
