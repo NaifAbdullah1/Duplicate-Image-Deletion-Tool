@@ -74,7 +74,12 @@ namespace DuplicateImageDeletionTool
             // Commence duplicate removal here: 
             Console.WriteLine("Processing...");
 
-            string deletionDirectory = CreateDeletionDirectory(parentDirectory);
+            string? deletionDirectory = CreateDeletionDirectory(parentDirectory);
+
+            if (deletionDirectory == null)
+            {
+
+            }
 
             Document report = CreateReport(deletionDirectory);
 
@@ -226,7 +231,7 @@ namespace DuplicateImageDeletionTool
         /// filer out.</param>
         /// 
         /// <returns>
-        /// Returns the sanitised path as a string only if the user enters a 
+        /// Returns the sanitized path as a string only if the user enters a 
         /// valid string. If the user's input was invalid (e.g., an empty string
         /// or a path that doesn't exist), a null is returned, which would 
         /// signal the main method to prompt the user for inputting a valid 
@@ -235,25 +240,44 @@ namespace DuplicateImageDeletionTool
         {
             if (path == null || path.Equals("")) // Ensuring input is not empty
             {
-                // Error message here
                 Console.WriteLine("ERROR: Input cannot have 0 characters. Please try again: ");
-                return null; // have the user repeat their input
+                return null;
             }
             else
             {
-                // We'll get the canonical paths as a means of sanitizing the user's input
-                // Source: https://stackoverflow.com/questions/8092314/c-sharp-canonical-file-names
-                string sanitizedPath = Path.GetFullPath(path); // Maybe an error can occurr here, use try-catch with a specific exception class
-                if (!Path.Exists(sanitizedPath)) // If path doesn't exist
+                try
                 {
-                    Console.WriteLine("ERROR: Path doesn't exist. Try entering a valid path.");
-                    return null;
+                    // We'll get the canonical paths as a means of sanitizing the user's input
+                    // Source: https://stackoverflow.com/questions/8092314/c-sharp-canonical-file-names
+                    string sanitizedPath = Path.GetFullPath(path); // Maybe an error can occurr here, use try-catch with a specific exception class
+                    if (!Path.Exists(sanitizedPath)) // If path doesn't exist
+                    {
+                        Console.WriteLine("ERROR: Path doesn't exist. Try entering a valid path.");
+                        return null;
+                    }
+                    else
+                    {
+                        Console.WriteLine("The target file which will have the images in "
+                        + "it filtered is located at: \n" + sanitizedPath);
+                        return sanitizedPath;
+                    }
+
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("The target file which will have the images in "
-                    + "it filtered is located at: \n" + sanitizedPath);
-                    return sanitizedPath;
+                    if (ex is ArgumentException)
+                    {
+                        Console.WriteLine("ERROR: Invalid path. Please try again: ");
+                    }
+                    else if (ex is PathTooLongException)
+                    {
+                        Console.WriteLine("ERROR: Path is too long. Please try a shorter one: ");
+                    }
+                    else
+                    {
+                        Console.WriteLine("ERROR: An unexpected error occurred. Please try again: ");
+                    }
+                    return null;
                 }
             }
         }
@@ -285,7 +309,7 @@ namespace DuplicateImageDeletionTool
                         {
                             // If Image A and B are different images and B hasn't been already assigned to another one as a similar image
                             double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
-                            if (similarityScore >= SimilarityThreshold) 
+                            if (similarityScore >= SimilarityThreshold)
                             {
                                 // Similarity detected
                                 imageA.SimilarImages.Add(imageB);
@@ -305,15 +329,38 @@ namespace DuplicateImageDeletionTool
             report.Close();
         }
 
-        static string CreateDeletionDirectory(string parentDirectory)
+        static string? CreateDeletionDirectory(string parentDirectory)
         {
-            // TODO: Make a try-catch here
             // The directory in which we put deleted images
             string deletionDirectory = $"{parentDirectory}/DELETED";
-            if (!Directory.Exists(deletionDirectory))
+            try
             {
-                Directory.CreateDirectory(deletionDirectory);
-                Console.WriteLine("Directory created!");
+                if (!Directory.Exists(deletionDirectory))
+                {
+                    Directory.CreateDirectory(deletionDirectory);
+                    Console.WriteLine("Deletion directory created!");
+                    return deletionDirectory;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is PathTooLongException)
+                {
+                    Console.WriteLine($"Error creating directory. Path was too long: {ex.Message}");
+                }
+                else if (ex is DirectoryNotFoundException)
+                {
+                    Console.WriteLine($"Error creating directory, directory wasn't found: {ex.Message}");
+                }
+                else if (ex is UnauthorizedAccessException)
+                {
+                    Console.WriteLine($"Permission Error encountered when creating directory: {ex.Message}");
+                }
+                else
+                {
+                    Console.WriteLine($"An unexpected error occurred while creating the deletion directory: {ex.Message}");
+                }
+                return null;
             }
             return deletionDirectory;
         }
@@ -357,13 +404,14 @@ namespace DuplicateImageDeletionTool
                 try
                 {
                     // Source: https://docs.sixlabors.com/articles/imagesharp/imageformats.html
-                    string supportedImageFormatsRegex = @"\.(bmp|gif|jpeg|pbm|png|tiff|tga|webp)$";
+                    string supportedImageFormatsRegex = @"\.(bmp|gif|jpeg|pbm|png|tiff|tga|webp|jpg)$";
+
                     if (!Regex.IsMatch(GetExtension(path.ToLower()), supportedImageFormatsRegex))
                     {
                         // Create the new directory and move the images
                         string unsupportedImagesDirectory = $"{parentDirectory}/UNSUPPORTED IMAGES";
 
-                        if (Directory.Exists(unsupportedImagesDirectory) == false)
+                        if (!Directory.Exists(unsupportedImagesDirectory))
                         {
                             Directory.CreateDirectory(unsupportedImagesDirectory);
                             Console.WriteLine("Directory created for unsupported images.");
@@ -377,9 +425,8 @@ namespace DuplicateImageDeletionTool
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Error: Failed to move {path} to unsupported directory");
+                            Console.WriteLine($"Error: Failed to move {path} to unsupported directory. Error Message: " + ex.Message);
                         }
-
                     }
                     else
                     {
@@ -401,10 +448,17 @@ namespace DuplicateImageDeletionTool
                     Console.WriteLine($"Memory Error: Happened while loading image: {path}. {ex.Message}");
                     // TODO: Write to the report 
                 }
+                catch (FileNotFoundException ex)
+                {
+                    Console.WriteLine($"ERROR: File wasn't found. Image: {path},Error message: {ex.Message}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.WriteLine($"ERROR: File isn't accessible. Image: {path}, error message: {ex.Message}");
+                }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error processing image: {path}. {ex.Message}");
-                    // TODO: Write to the report
+                    Console.WriteLine($"Error processing image: {path}. error message: {ex.Message}");
                 }
             }
 

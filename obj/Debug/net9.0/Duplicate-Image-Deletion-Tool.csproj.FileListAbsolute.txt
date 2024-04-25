@@ -42,6 +42,3 @@ C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Newtonsoft.Js
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\itext.bouncy-castle-adapter.dll
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\SixLabors.ImageSharp.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\ImageSharp.Heif.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\LibHeifSharp.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\CoenM.ImageSharp.ImageHash.dll

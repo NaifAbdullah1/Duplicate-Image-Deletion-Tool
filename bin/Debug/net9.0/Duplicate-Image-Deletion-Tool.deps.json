@@ -8,8 +8,6 @@
     ".NETCoreApp,Version=v9.0": {
       "Duplicate-Image-Deletion-Tool/1.0.0": {
         "dependencies": {
-          "CoenM.ImageSharp.ImageHash": "1.3.6",
-          "HeyRed.ImageSharp.Heif": "2.1.3",
           "SixLabors.ImageSharp": "3.1.3",
           "System.Drawing.Common": "8.0.3",
           "itext7": "8.0.3",
@@ -24,29 +22,6 @@
           "lib/net6.0/BouncyCastle.Cryptography.dll": {
             "assemblyVersion": "2.0.0.0",
             "fileVersion": "2.2.1.47552"
-          }
-        }
-      },
-      "CoenM.ImageSharp.ImageHash/1.3.6": {
-        "dependencies": {
-          "SixLabors.ImageSharp": "3.1.3"
-        },
-        "runtime": {
-          "lib/net6.0/CoenM.ImageSharp.ImageHash.dll": {
-            "assemblyVersion": "1.3.6.25915",
-            "fileVersion": "1.3.6.25915"
-          }
-        }
-      },
-      "HeyRed.ImageSharp.Heif/2.1.3": {
-        "dependencies": {
-          "LibHeifSharp": "3.0.0",
-          "SixLabors.ImageSharp": "3.1.3"
-        },
-        "runtime": {
-          "lib/net6.0/ImageSharp.Heif.dll": {
-            "assemblyVersion": "2.1.3.0",
-            "fileVersion": "2.1.3.0"
           }
         }
       },
@@ -147,14 +122,6 @@
       "itext7.bouncy-castle-adapter/8.0.3": {
         "dependencies": {
           "itext.bouncy-castle-adapter": "8.0.3"
-        }
-      },
-      "LibHeifSharp/3.0.0": {
-        "runtime": {
-          "lib/netstandard2.0/LibHeifSharp.dll": {
-            "assemblyVersion": "3.0.0.0",
-            "fileVersion": "3.0.0.0"
-          }
         }
       },
       "Microsoft.DotNet.PlatformAbstractions/1.1.0": {
@@ -838,20 +805,6 @@
       "path": "bouncycastle.cryptography/2.2.1",
       "hashPath": "bouncycastle.cryptography.2.2.1.nupkg.sha512"
     },
-    "CoenM.ImageSharp.ImageHash/1.3.6": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-YybzOMYqvZ5xu+TH2ATefESFTR1DcZbGCc4BBl7fVWITP78Wng8vvjT38pLv5dyQUGXR3V9Gfo9DBBjAEYWSPQ==",
-      "path": "coenm.imagesharp.imagehash/1.3.6",
-      "hashPath": "coenm.imagesharp.imagehash.1.3.6.nupkg.sha512"
-    },
-    "HeyRed.ImageSharp.Heif/2.1.3": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-dFgUvcxhnBNtrCcYdoZVYqIrUcFfP85FGAQrj22SSCQdvZY2G0lSK8egz0YVKm8RgIVfvo9nAZUuxLYfxcD/Uw==",
-      "path": "heyred.imagesharp.heif/2.1.3",
-      "hashPath": "heyred.imagesharp.heif.2.1.3.nupkg.sha512"
-    },
     "itext/8.0.3": {
       "type": "package",
       "serviceable": true,
@@ -886,13 +839,6 @@
       "sha512": "sha512-GEUO0qkEdiTW4OX9JqO6tbW1ylH9jrV4jhBpnlipW0OVI6yZoq5aCZ7XRHfTm7SL8oukPcf91c1eJES3wwLz3w==",
       "path": "itext7.bouncy-castle-adapter/8.0.3",
       "hashPath": "itext7.bouncy-castle-adapter.8.0.3.nupkg.sha512"
-    },
-    "LibHeifSharp/3.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-UvIJneX0WkNYudWU0NOlcXkL06QrWkciQgC4hKVeM/U5PRqNNWog8xo1bhFGGmEVFLJpxipgu9UDNKXauc7z9Q==",
-      "path": "libheifsharp/3.0.0",
-      "hashPath": "libheifsharp.3.0.0.nupkg.sha512"
     },
     "Microsoft.DotNet.PlatformAbstractions/1.1.0": {
       "type": "package",
