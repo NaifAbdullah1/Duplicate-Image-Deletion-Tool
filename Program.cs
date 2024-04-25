@@ -75,13 +75,18 @@ namespace DuplicateImageDeletionTool
             Console.WriteLine("Processing...");
 
             string? deletionDirectory = CreateDeletionDirectory(parentDirectory);
-
             if (deletionDirectory == null)
             {
-
+                Console.WriteLine("Exiting program due deletion direcotry creation failure. Please try again.");
+                Environment.Exit(0);
             }
 
-            Document report = CreateReport(deletionDirectory);
+            Document? report = CreateReport(deletionDirectory);
+            if (report == null)
+            {
+                Console.WriteLine("Exiting program due to report creation failure. Please try again.");
+                Environment.Exit(0);
+            }
 
             // Traverse a directory and its subdirectories. Results is a list of every image's path
             List<Image> imagesToFilter =
@@ -365,15 +370,54 @@ namespace DuplicateImageDeletionTool
             return deletionDirectory;
         }
 
-        static Document CreateReport(string deletionDirectory)
+        static Document? CreateReport(string deletionDirectory)
         {
-            // TODO: Make a try-catch here
-            // The PDF report with the details of was was deleted
-            PdfWriter pdfWriter = new PdfWriter($"{deletionDirectory}/report.pdf");
-            PdfDocument pdfDocument = new PdfDocument(pdfWriter);
-            Document report = new Document(pdfDocument);
-            return report;
+            try
+            {
+                // Ensure the directory exists
+                if (!Directory.Exists(deletionDirectory))
+                {
+                    Console.WriteLine("ERROR: Directory does not exist. Cannot create report.");
+                    return null;
+                }
 
+                // Attempt to create the PDF report
+                PdfWriter pdfWriter = new PdfWriter($"{deletionDirectory}/report.pdf");
+                PdfDocument pdfDocument = new PdfDocument(pdfWriter);
+                Document report = new Document(pdfDocument);
+
+                return report;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine("ERROR: Unauthorized access. You do not have permission to create files in this location: " + deletionDirectory + "\n Error message: " + ex.Message);
+                return null;
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                Console.WriteLine("ERROR: Specified directory not found. Ensure the path is correct: " + deletionDirectory + "\n Error message: " + ex.Message);
+                return null;
+            }
+            catch (PathTooLongException ex)
+            {
+                Console.WriteLine("ERROR: Path for the report location is too long: " + deletionDirectory + "\nPlease use a shorter path." + ex.Message);
+                return null;
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"ERROR: I/O error occurred while creating the report. Details: {ex.Message}");
+                return null;
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine($"ERROR: Invalid argument. {ex.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR: An unexpected error occurred. Details: {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
