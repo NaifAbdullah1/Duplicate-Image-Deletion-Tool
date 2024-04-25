@@ -1,4 +1,4 @@
-# Duplicate Image Deletion Tool
+# Duplicate Image Detection and Deletion Tool
 
 ## Overview
 
