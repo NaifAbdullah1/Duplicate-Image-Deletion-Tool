@@ -40,39 +40,52 @@ namespace DuplicateImageDeletionTool
         /// <param name="args">Command line arguments</param>
         static void Main(string[] args)
         {
-            if (args.Length != 0)
+            string? targetDirectory;
+            if (args.Length == 1)
             {
-                // TODO: Take the path the was provided in cmd line args
+                // Taking the path the was provided in cmd line args
+                targetDirectory = args[0];
+            }
+            else if (args.Length > 1)
+            {
+                Console.WriteLine("ERROR: There can only be one argument, which is the target directory. Please try again by entering the target directory: ");
             }
             else
             {
                 Console.WriteLine("Provide the Absolute path of the folder "
                     + "containing \nthe images you want to remove duplicates from: ");
-
-                string? targetDirectory;
-                // Validate user input and prevent attacks (including injection attacks)
-                // Repeat the do-while loop and prompt user to try again? (true if the user enters invalid input)
-                string? sanitizedPath;
-                string parentDirectory;
-                do
-                {
-                    targetDirectory = Console.ReadLine();
-                    sanitizedPath = IsUserInputValid(targetDirectory);
-                    parentDirectory = sanitizedPath;
-                }
-                while (sanitizedPath == null);
-
-                // Commence duplicate removal here: 
-                Console.WriteLine("Processing...");
-
-                // Traverse a directory and its subdirectories. Results is a list of every image's path
-                List<Image> imagesToFilter =
-                TraverseTargetDirectory(sanitizedPath, parentDirectory);
-
-                DeleteDuplicateImages(sanitizedPath, parentDirectory, imagesToFilter);
-
-                Console.WriteLine("Done");
             }
+
+            // Validate user input and prevent attacks (including injection attacks)
+            // Repeat the do-while loop and prompt user to try again? (true if the user enters invalid input)
+            string? sanitizedPath;
+            //string parentDirectory;
+            do
+            {
+                targetDirectory = Console.ReadLine();
+                sanitizedPath = IsUserInputValid(targetDirectory);
+                //parentDirectory = sanitizedPath;
+            }
+            while (sanitizedPath == null);
+
+            // This variable is not supposed to get reassigned throughout execution
+            string parentDirectory = sanitizedPath;
+
+            // Commence duplicate removal here: 
+            Console.WriteLine("Processing...");
+
+            string deletionDirectory = CreateDeletionDirectory(parentDirectory);
+
+            Document report = CreateReport(deletionDirectory);
+
+            // Traverse a directory and its subdirectories. Results is a list of every image's path
+            List<Image> imagesToFilter =
+            TraverseTargetDirectory(sanitizedPath, parentDirectory, report);
+
+            DeleteDuplicateImages(sanitizedPath, parentDirectory, imagesToFilter, report);
+
+            Console.WriteLine("Done");
+
         }
 
         /// <summary>
@@ -223,7 +236,7 @@ namespace DuplicateImageDeletionTool
             if (path == null || path.Equals("")) // Ensuring input is not empty
             {
                 // Error message here
-                Console.WriteLine("ERROR: Input cannot have 0 characters.");
+                Console.WriteLine("ERROR: Input cannot have 0 characters. Please try again: ");
                 return null; // have the user repeat their input
             }
             else
@@ -231,7 +244,7 @@ namespace DuplicateImageDeletionTool
                 // We'll get the canonical paths as a means of sanitizing the user's input
                 // Source: https://stackoverflow.com/questions/8092314/c-sharp-canonical-file-names
                 string sanitizedPath = Path.GetFullPath(path); // Maybe an error can occurr here, use try-catch with a specific exception class
-                if (Path.Exists(sanitizedPath) == false) // If path doesn't exist
+                if (!Path.Exists(sanitizedPath)) // If path doesn't exist
                 {
                     Console.WriteLine("ERROR: Path doesn't exist. Try entering a valid path.");
                     return null;
@@ -251,22 +264,8 @@ namespace DuplicateImageDeletionTool
         /// <param name="sanitizedPath">Target directory in which we're looking for images</param>
         /// <param name="parentDirectory">A constant, the parent-most target directory</param>
         /// <param name="imagesToFilter">A list of image objects. The images to filter.</param>
-        static void DeleteDuplicateImages(string sanitizedPath, string parentDirectory, List<Image> imagesToFilter)
+        static void DeleteDuplicateImages(string sanitizedPath, string parentDirectory, List<Image> imagesToFilter, Document report)
         {
-            // The directory in which we put deleted images
-            string deletionDirectory = $"{parentDirectory}/DELETED";
-            if (!Directory.Exists(deletionDirectory))
-            {
-                Directory.CreateDirectory(deletionDirectory);
-                Console.WriteLine("Directory created!");
-            }
-
-            // The PDF report with the details of was was deleted
-            PdfWriter pdfWriter = new PdfWriter($"{deletionDirectory}/report.pdf");
-            PdfDocument pdfDocument = new PdfDocument(pdfWriter);
-            Document report = new Document(pdfDocument);
-
-
             // Going through all the images in a O(N^2) complexity to populate the SimilarImages variable for each image
 
             // Indicates if an image is similar to another
@@ -275,6 +274,7 @@ namespace DuplicateImageDeletionTool
             {
                 if (imageA.SimilarToAnotherImage)
                 {
+                    // Already falls under another image as similar
                     continue;
                 }
                 else
@@ -283,9 +283,11 @@ namespace DuplicateImageDeletionTool
                     {
                         if (!imageA.Path.Equals(imageB.Path) && imageB.SimilarToAnotherImage == false)
                         {
+                            // If Image A and B are different images and B hasn't been already assigned to another one as a similar image
                             double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
-                            if (similarityScore >= SimilarityThreshold) // Similarity detected? 
+                            if (similarityScore >= SimilarityThreshold) 
                             {
+                                // Similarity detected
                                 imageA.SimilarImages.Add(imageB);
                                 imageB.SimilarToAnotherImage = true;
                             }
@@ -294,9 +296,37 @@ namespace DuplicateImageDeletionTool
                 }
             }
 
+            // This will leave the array to only have the parent images along with their similar ones. The total number of parent images + their similar images = the total number of images in all directories and subdirectories.  
             imagesToFilter.RemoveAll(image => image.SimilarToAnotherImage);
-            
+
+            // Write the report here. 
+
+            // Move the images here as groups/buckets.
             report.Close();
+        }
+
+        static string CreateDeletionDirectory(string parentDirectory)
+        {
+            // TODO: Make a try-catch here
+            // The directory in which we put deleted images
+            string deletionDirectory = $"{parentDirectory}/DELETED";
+            if (!Directory.Exists(deletionDirectory))
+            {
+                Directory.CreateDirectory(deletionDirectory);
+                Console.WriteLine("Directory created!");
+            }
+            return deletionDirectory;
+        }
+
+        static Document CreateReport(string deletionDirectory)
+        {
+            // TODO: Make a try-catch here
+            // The PDF report with the details of was was deleted
+            PdfWriter pdfWriter = new PdfWriter($"{deletionDirectory}/report.pdf");
+            PdfDocument pdfDocument = new PdfDocument(pdfWriter);
+            Document report = new Document(pdfDocument);
+            return report;
+
         }
 
         /// <summary>
@@ -309,24 +339,26 @@ namespace DuplicateImageDeletionTool
         /// target directory.</param>
         /// <returns>The names of all the pictures found within the 
         /// directory and its sub-directories.</returns>
-        static List<Image> TraverseTargetDirectory(string sanitizedPath, string parentDirectory)
+        static List<Image> TraverseTargetDirectory(string sanitizedPath, string parentDirectory, Document report)
         {
+            // We won't traverse the DELETED and UNSUPPORTED IMAGES files
             if (Path.GetFileName(sanitizedPath).Equals("DELETED") || Path.GetFileName(sanitizedPath).Equals("UNSUPPORTED IMAGES"))
             {
                 return [];
             }
+
             List<Image> imagesFound = new List<Image>();
 
-            // Adding the images in the current directory, the target one
+            // Creating an array of strings where every string is the absolute path of an image in the sanitizedPath directory
             string[] picturePaths = Directory.GetFiles(sanitizedPath);
 
             foreach (string path in picturePaths)
             {
                 try
                 {
-                    // If the extension is HEIC or HEIF, move it to the unsupported files directory
-                    string unsupportedFormatsRegex = @"\.(heic|heif)$";
-                    if (Regex.IsMatch(GetExtension(path.ToLower()), unsupportedFormatsRegex))
+                    // Source: https://docs.sixlabors.com/articles/imagesharp/imageformats.html
+                    string supportedImageFormatsRegex = @"\.(bmp|gif|jpeg|pbm|png|tiff|tga|webp)$";
+                    if (!Regex.IsMatch(GetExtension(path.ToLower()), supportedImageFormatsRegex))
                     {
                         // Create the new directory and move the images
                         string unsupportedImagesDirectory = $"{parentDirectory}/UNSUPPORTED IMAGES";
@@ -349,26 +381,30 @@ namespace DuplicateImageDeletionTool
                         }
 
                     }
-                    using (Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(path))
+                    else
                     {
-                        imagesFound.Add(new Image(
-                            path,
-                            new FileInfo(path).Length,
-                            image.Height,
-                            image.Width,
-                            image.Metadata.VerticalResolution,
-                            image.Metadata.HorizontalResolution,
-                            CalculatePerceptualHash(new Bitmap(path))));
+                        using (Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(path))
+                        {
+                            imagesFound.Add(new Image(
+                                path,
+                                new FileInfo(path).Length,
+                                image.Height,
+                                image.Width,
+                                image.Metadata.VerticalResolution,
+                                image.Metadata.HorizontalResolution,
+                                CalculatePerceptualHash(new Bitmap(path))));
+                        }
                     }
                 }
                 catch (OutOfMemoryException ex)
                 {
-                    Console.WriteLine($"Error loading image: {path}. {ex.Message}");
+                    Console.WriteLine($"Memory Error: Happened while loading image: {path}. {ex.Message}");
+                    // TODO: Write to the report 
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error processing image: {path}. {ex.Message}");
-
+                    // TODO: Write to the report
                 }
             }
 
@@ -376,7 +412,7 @@ namespace DuplicateImageDeletionTool
             string[] subdirectories = Directory.GetDirectories(sanitizedPath);
             foreach (string subdirectory in subdirectories)
             {
-                imagesFound.AddRange(TraverseTargetDirectory(subdirectory, parentDirectory));
+                imagesFound.AddRange(TraverseTargetDirectory(subdirectory, parentDirectory, report));
             }
             return imagesFound;
         }
