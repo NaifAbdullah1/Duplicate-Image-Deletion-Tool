@@ -1,8 +1,8 @@
-# Duplicate Image Deletion Tool
+# Duplicate Image Detection and Grouping Tool
 
 ## Overview
 
-The "Duplicate Image Detection and Deletion Tool" is a C# program designed to identify and group similar images within a specified directory and its subdirectories. This utility is intended for users who have large collections of images and need to organize, declutter, or remove duplicate and visually similar images. The program aims to reduce the manual effort in identifying duplicates, providing an efficient way to manage large image libraries.
+The "Duplicate Image Detection and Grouping Tool" is a C# program designed to identify and group similar images within a specified directory and its subdirectories. This utility is intended for users who have large collections of images and need to organize, declutter, or remove duplicate and visually similar images. The program aims to reduce the manual effort in identifying duplicates, providing an efficient way to manage large image libraries.
 
 ## Features
 
@@ -37,8 +37,7 @@ The "Duplicate Image Detection and Deletion Tool" is a C# program designed to id
 5. Take Further Action: Based on the output, decide whether to permanently delete the images in the "DELETED" directory or move them back to the original location.
 
 ## Notes
-- This tool operates synchronously and may take some time to process large directories with many images.
-- It's recommended to make a backup of your images before running the tool, especially if you're unsure about the results.
+- It's recommended to make a backup of your images before running the tool.
 
 ## Contributors
 Naif Abdullah
