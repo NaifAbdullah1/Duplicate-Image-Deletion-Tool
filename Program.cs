@@ -20,6 +20,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using System.Text.RegularExpressions;
+using System.Drawing.Printing;
 
 
 namespace DuplicateImageDeletionTool
@@ -71,28 +72,17 @@ namespace DuplicateImageDeletionTool
             // This variable is not supposed to get reassigned throughout execution
             string parentDirectory = sanitizedPath;
 
-            // Commence duplicate removal here: 
             Console.WriteLine("Processing...");
 
-            string? deletionDirectory = CreateDeletionDirectory(parentDirectory);
-            if (deletionDirectory == null)
-            {
-                Console.WriteLine("Exiting program due deletion direcotry creation failure. Please try again.");
-                Environment.Exit(0);
-            }
+            string reportDirectory = CreateDirectory("Report", parentDirectory);
 
-            Document? report = CreateReport(deletionDirectory);
-            if (report == null)
-            {
-                Console.WriteLine("Exiting program due to report creation failure. Please try again.");
-                Environment.Exit(0);
-            }
+            Document report = CreateReport(reportDirectory);
 
             // Traverse a directory and its subdirectories. Results is a list of every image's path
             List<Image> imagesToFilter =
             TraverseTargetDirectory(sanitizedPath, parentDirectory, report);
 
-            DeleteDuplicateImages(sanitizedPath, parentDirectory, imagesToFilter, report);
+            GroupSimilarImages(sanitizedPath, parentDirectory, imagesToFilter, report);
 
             Console.WriteLine("Done");
 
@@ -266,22 +256,10 @@ namespace DuplicateImageDeletionTool
                         + "it filtered is located at: \n" + sanitizedPath);
                         return sanitizedPath;
                     }
-
                 }
                 catch (Exception ex)
                 {
-                    if (ex is ArgumentException)
-                    {
-                        Console.WriteLine("ERROR: Invalid path. Please try again: ");
-                    }
-                    else if (ex is PathTooLongException)
-                    {
-                        Console.WriteLine("ERROR: Path is too long. Please try a shorter one: ");
-                    }
-                    else
-                    {
-                        Console.WriteLine("ERROR: An unexpected error occurred. Please try again: ");
-                    }
+                    PrintErrorMessage(ex, "Validating User Input", path, false);
                     return null;
                 }
             }
@@ -293,7 +271,7 @@ namespace DuplicateImageDeletionTool
         /// <param name="sanitizedPath">Target directory in which we're looking for images</param>
         /// <param name="parentDirectory">A constant, the parent-most target directory</param>
         /// <param name="imagesToFilter">A list of image objects. The images to filter.</param>
-        static void DeleteDuplicateImages(string sanitizedPath, string parentDirectory, List<Image> imagesToFilter, Document report)
+        static void GroupSimilarImages(string sanitizedPath, string parentDirectory, List<Image> imagesToFilter, Document report)
         {
             // Going through all the images in a O(N^2) complexity to populate the SimilarImages variable for each image
 
@@ -328,94 +306,91 @@ namespace DuplicateImageDeletionTool
             // This will leave the array to only have the parent images along with their similar ones. The total number of parent images + their similar images = the total number of images in all directories and subdirectories.  
             imagesToFilter.RemoveAll(image => image.SimilarToAnotherImage);
 
-            // Write the report here. 
+            // Write the report here.
+            // For every image to filter where its "similarImages" is >= 1, create a dirctory for it.
+            int numOfDuplicateImageDirectoriesCreated = 0;
+
+            foreach (Image image in imagesToFilter)
+            {
+                try
+                {
+                    if (image.SimilarImages.Count > 0)
+                    {
+                        string similarImageDirectory = CreateDirectory("Similar Img No. " + ++numOfDuplicateImageDirectoriesCreated,
+                        parentDirectory,
+                        numOfDuplicateImageDirectoriesCreated);
+
+                        // Now, dump 'image' along with its similar images into the similarImageDirectory
+                        string parentImagePath = image.Path;
+                        string destination = Path.Combine(similarImageDirectory, Path.GetFileName(parentImagePath));
+
+                        File.Move(parentImagePath, destination);
+                        // Now that the parent image is moved, we're going to move it with its similar images to be in the same file. 
+                        foreach (Image similarImage in image.SimilarImages)
+                        {
+                            string similarImagePath = similarImage.Path;
+                            destination = Path.Combine(similarImageDirectory, Path.GetFileName(similarImagePath));
+
+                            File.Move(similarImagePath, destination);
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    PrintErrorMessage(ex, "Bucketing Images", image.Path);
+                }
+            }
+
+
 
             // Move the images here as groups/buckets.
             report.Close();
         }
 
-        static string? CreateDeletionDirectory(string parentDirectory)
+        static string CreateDirectory(string directoryName, string parentDirectory, int numOfDuplicateImageDirectoriesCreated = -1)
         {
-            // The directory in which we put deleted images
-            string deletionDirectory = $"{parentDirectory}/DELETED";
+            // The address of the created directory
+            string createdDirectory = $"{parentDirectory}/{directoryName}";
             try
             {
-                if (!Directory.Exists(deletionDirectory))
+                if (!Directory.Exists(createdDirectory))
                 {
-                    Directory.CreateDirectory(deletionDirectory);
-                    Console.WriteLine("Deletion directory created!");
-                    return deletionDirectory;
+                    Directory.CreateDirectory(createdDirectory);
+                    Console.WriteLine($"{directoryName} directory created!");
+                    return createdDirectory;
                 }
             }
             catch (Exception ex)
             {
-                if (ex is PathTooLongException)
-                {
-                    Console.WriteLine($"Error creating directory. Path was too long: {ex.Message}");
-                }
-                else if (ex is DirectoryNotFoundException)
-                {
-                    Console.WriteLine($"Error creating directory, directory wasn't found: {ex.Message}");
-                }
-                else if (ex is UnauthorizedAccessException)
-                {
-                    Console.WriteLine($"Permission Error encountered when creating directory: {ex.Message}");
-                }
-                else
-                {
-                    Console.WriteLine($"An unexpected error occurred while creating the deletion directory: {ex.Message}");
-                }
-                return null;
+                PrintErrorMessage(ex, "Create Directory", createdDirectory);
+                return "";
             }
-            return deletionDirectory;
+            return createdDirectory;
         }
 
-        static Document? CreateReport(string deletionDirectory)
+        static Document CreateReport(string reportDirectory)
         {
             try
             {
                 // Ensure the directory exists
-                if (!Directory.Exists(deletionDirectory))
+                if (!Directory.Exists(reportDirectory))
                 {
                     Console.WriteLine("ERROR: Directory does not exist. Cannot create report.");
+                    Environment.Exit(0);
                     return null;
                 }
 
                 // Attempt to create the PDF report
-                PdfWriter pdfWriter = new PdfWriter($"{deletionDirectory}/report.pdf");
+                PdfWriter pdfWriter = new PdfWriter($"{reportDirectory}/report.pdf");
                 PdfDocument pdfDocument = new PdfDocument(pdfWriter);
                 Document report = new Document(pdfDocument);
 
                 return report;
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine("ERROR: Unauthorized access. You do not have permission to create files in this location: " + deletionDirectory + "\n Error message: " + ex.Message);
-                return null;
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                Console.WriteLine("ERROR: Specified directory not found. Ensure the path is correct: " + deletionDirectory + "\n Error message: " + ex.Message);
-                return null;
-            }
-            catch (PathTooLongException ex)
-            {
-                Console.WriteLine("ERROR: Path for the report location is too long: " + deletionDirectory + "\nPlease use a shorter path." + ex.Message);
-                return null;
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"ERROR: I/O error occurred while creating the report. Details: {ex.Message}");
-                return null;
-            }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine($"ERROR: Invalid argument. {ex.Message}");
-                return null;
-            }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR: An unexpected error occurred. Details: {ex.Message}");
+                PrintErrorMessage(ex, "Report Creation", reportDirectory);
                 return null;
             }
         }
@@ -432,8 +407,8 @@ namespace DuplicateImageDeletionTool
         /// directory and its sub-directories.</returns>
         static List<Image> TraverseTargetDirectory(string sanitizedPath, string parentDirectory, Document report)
         {
-            // We won't traverse the DELETED and UNSUPPORTED IMAGES files
-            if (Path.GetFileName(sanitizedPath).Equals("DELETED") || Path.GetFileName(sanitizedPath).Equals("UNSUPPORTED IMAGES"))
+            // We won't traverse the Report and UNSUPPORTED IMAGES files
+            if (Path.GetFileName(sanitizedPath).Equals("Report") || Path.GetFileName(sanitizedPath).Equals("Unsupported Images"))
             {
                 return [];
             }
@@ -445,34 +420,29 @@ namespace DuplicateImageDeletionTool
 
             foreach (string path in picturePaths)
             {
-                try
+                // Source: https://docs.sixlabors.com/articles/imagesharp/imageformats.html
+                string supportedImageFormatsRegex = @"\.(bmp|gif|jpeg|pbm|png|tiff|tga|webp|jpg)$";
+
+                if (!Regex.IsMatch(GetExtension(path.ToLower()), supportedImageFormatsRegex))
                 {
-                    // Source: https://docs.sixlabors.com/articles/imagesharp/imageformats.html
-                    string supportedImageFormatsRegex = @"\.(bmp|gif|jpeg|pbm|png|tiff|tga|webp|jpg)$";
+                    string? unsupportedImagesDirectory = CreateDirectory("Unsupported Images", parentDirectory);
 
-                    if (!Regex.IsMatch(GetExtension(path.ToLower()), supportedImageFormatsRegex))
+                    // Move
+                    try
                     {
-                        // Create the new directory and move the images
-                        string unsupportedImagesDirectory = $"{parentDirectory}/UNSUPPORTED IMAGES";
-
-                        if (!Directory.Exists(unsupportedImagesDirectory))
-                        {
-                            Directory.CreateDirectory(unsupportedImagesDirectory);
-                            Console.WriteLine("Directory created for unsupported images.");
-                        }
-                        // Move
-                        try
-                        {
-                            File.Move(path, Path.Combine(unsupportedImagesDirectory, Path.GetFileName(path)));
-                            Console.WriteLine("An unsupported image has been moved to the unsupported directory: " + path);
-                            continue;
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error: Failed to move {path} to unsupported directory. Error Message: " + ex.Message);
-                        }
+                        File.Move(path, Path.Combine(unsupportedImagesDirectory, Path.GetFileName(path)));
+                        Console.WriteLine("An unsupported image has been moved to the unsupported directory: " + path);
+                        continue;
                     }
-                    else
+                    catch (Exception ex)
+                    {
+                        PrintErrorMessage(ex, "Move Unsupported Image to Unsupported Image file.", Path.Combine(unsupportedImagesDirectory, Path.GetFileName(path)), false);
+                    }
+                }
+                else
+                {
+
+                    try
                     {
                         using (Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(path))
                         {
@@ -484,25 +454,13 @@ namespace DuplicateImageDeletionTool
                                 image.Metadata.VerticalResolution,
                                 image.Metadata.HorizontalResolution,
                                 CalculatePerceptualHash(new Bitmap(path))));
+                                image.Dispose(); // Releasing any locks on the image so we can conduct operations on it such as moving it. 
                         }
                     }
-                }
-                catch (OutOfMemoryException ex)
-                {
-                    Console.WriteLine($"Memory Error: Happened while loading image: {path}. {ex.Message}");
-                    // TODO: Write to the report 
-                }
-                catch (FileNotFoundException ex)
-                {
-                    Console.WriteLine($"ERROR: File wasn't found. Image: {path},Error message: {ex.Message}");
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    Console.WriteLine($"ERROR: File isn't accessible. Image: {path}, error message: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error processing image: {path}. error message: {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        PrintErrorMessage(ex, "Loading Images", path, false);
+                    }
                 }
             }
 
@@ -523,6 +481,49 @@ namespace DuplicateImageDeletionTool
         static string GetExtension(string path)
         {
             return Path.GetExtension(path);
+        }
+
+        static void PrintErrorMessage(Exception ex, string action, string directory, bool terminateProgram = true)
+        {
+            if (ex is OutOfMemoryException)
+            {
+                Console.WriteLine("ERROR: Memory Error.");
+            }
+            else if (ex is UnauthorizedAccessException)
+            {
+                Console.WriteLine("ERROR: Unauthorized access. You do not have permission to access files in this location.");
+            }
+            else if (ex is DirectoryNotFoundException)
+            {
+                Console.WriteLine("ERROR: Specified directory not found.");
+            }
+            else if (ex is PathTooLongException)
+            {
+                Console.WriteLine("ERROR: Path for the location is too long.");
+            }
+            else if (ex is IOException)
+            {
+                Console.WriteLine("ERROR: I/O error occurred.");
+            }
+            else if (ex is ArgumentException)
+            {
+                Console.WriteLine("ERROR: Invalid argument.");
+            }
+            else if (ex is FileNotFoundException)
+            {
+                Console.WriteLine($"ERROR: File wasn't found.");
+            }
+            else
+            {
+                Console.WriteLine("ERROR: An unexpected error occurred.");
+            }
+            Console.WriteLine($"Error message: {ex.Message}\n" +
+                    $"Action Type: {action}\n" +
+                    $"Directory: {directory}\n");
+            if (terminateProgram)
+            {
+                Environment.Exit(0);
+            }
         }
     }
 
@@ -573,75 +574,3 @@ namespace DuplicateImageDeletionTool
     }
 
 }
-
-
-// Deprecated
-/*
-static string ComputeImageDHash(string imagePath)
-{
-    // Opening the image as a Bitmap. "using" helps freeing up memory
-    using (Bitmap image = new Bitmap(imagePath))
-    {
-        // Resizing image to 9x8 for dHash computation to standardize 
-        // the image size for dHash calculation. The bigger the
-        // size (e.g., 16x15), the more accurate the comparison will be
-        // at the cost of a longer runtime
-        Bitmap resizedImage = new Bitmap(image, new System.Drawing.Size(32, 32)); // TODO: Maybe give the user the choice to tweak these values to increase sensitivity? 
-
-        // Computing dHash
-        /*
-        Iterating over the pixels of the resized image to compute the 
-        dHash. For each row of pixels, it compares the brightness of 
-        each pixel with the brightness of the next pixel in the row. 
-        If the brightness of the current pixel is greater than the 
-        brightness of the next pixel, it appends "1" to the hash; 
-        otherwise, it appends "0". This process generates a binary 
-        string representing the dHash of the image.
-        Brightness comparison helps capture the edge information 
-        and basic structure of the image.
-
-        string hash = "";
-        for (int y = 0; y < resizedImage.Height; y++)
-        {
-            for (int x = 0; x < resizedImage.Width - 1; x++)
-            {
-                // Enhance sensitivity by considering more information, such as color intensity or multiple channels
-                hash += (GetIntensity(resizedImage.GetPixel(x, y)) > GetIntensity(resizedImage.GetPixel(x + 1, y))) ? "1" : "0";
-
-            }
-        }
-
-        return hash;
-    }
-}
-*/
-
-// Helper function to calculate intensity (brightness) of a color
-/*
-static double GetIntensity(System.Drawing.Color color)
-{
-    // Calculate intensity as a weighted sum of RGB components
-    // You can experiment with different weightings to reflect human perception better
-    return 0.299 * color.R + 0.587 * color.G + 0.114 * color.B;
-}
-*/
-
-/*
-static int ComputeHammingDistance(string hashA, string hashB)
-{
-    if (hashA.Length != hashB.Length)
-    {
-        throw new ArgumentException($"Error: Encountered two hashes that are unequal in length.");
-    }
-
-    int distance = 0;
-    for (int i = 0; i < hashA.Length; i++)
-    {
-        if (hashA[i] != hashB[i])
-        {
-            distance++;
-        }
-    }
-    return distance;
-}
-*/
