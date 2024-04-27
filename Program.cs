@@ -14,13 +14,12 @@ If two images are identical, make sure to compare the other attributes such as r
 
 using System.Drawing;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-
 using iText.Kernel.Pdf;
 using iText.Layout;
 using System.Text.RegularExpressions;
 using System.Drawing.Printing;
+
+using System.Diagnostics;
 
 
 namespace DuplicateImageDeletionTool
@@ -86,6 +85,8 @@ namespace DuplicateImageDeletionTool
 
             Console.WriteLine("Done");
 
+
+
         }
 
         /// <summary>
@@ -96,18 +97,19 @@ namespace DuplicateImageDeletionTool
         static string CalculatePerceptualHash(Bitmap image)
         {
             // Resize the image to a fixed size
-            Bitmap resizedImage = ResizeImage(image, 32, 32);
+            using (Bitmap resizedImage = ResizeImage(image, 32, 32))
+            {
+                // Convert the resized image to grayscale
+                using (Bitmap grayscaleImage = ToGrayscale(resizedImage))
+                {
+                    // Calculate the average pixel value
+                    double averagePixelValue = CalculateAveragePixelValue(grayscaleImage);
 
-            // Convert the resized image to grayscale
-            Bitmap grayscaleImage = ToGrayscale(resizedImage);
-
-            // Calculate the average pixel value
-            double averagePixelValue = CalculateAveragePixelValue(grayscaleImage);
-
-            // Compute the hash
-            string hash = ComputeHash(grayscaleImage, averagePixelValue);
-
-            return hash;
+                    // Compute the hash
+                    string hash = ComputeHash(grayscaleImage, averagePixelValue);
+                    return hash;
+                }
+            }
         }
 
         /// <summary>
@@ -325,6 +327,7 @@ namespace DuplicateImageDeletionTool
                         string destination = Path.Combine(similarImageDirectory, Path.GetFileName(parentImagePath));
 
                         File.Move(parentImagePath, destination);
+
                         // Now that the parent image is moved, we're going to move it with its similar images to be in the same file. 
                         foreach (Image similarImage in image.SimilarImages)
                         {
@@ -333,7 +336,6 @@ namespace DuplicateImageDeletionTool
 
                             File.Move(similarImagePath, destination);
                         }
-
                     }
                 }
                 catch (Exception ex)
@@ -341,9 +343,6 @@ namespace DuplicateImageDeletionTool
                     PrintErrorMessage(ex, "Bucketing Images", image.Path);
                 }
             }
-
-
-
             // Move the images here as groups/buckets.
             report.Close();
         }
@@ -441,26 +440,20 @@ namespace DuplicateImageDeletionTool
                 }
                 else
                 {
-
                     try
                     {
-                        using (Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(path))
-                        {
-                            imagesFound.Add(new Image(
-                                path,
-                                new FileInfo(path).Length,
-                                image.Height,
-                                image.Width,
-                                image.Metadata.VerticalResolution,
-                                image.Metadata.HorizontalResolution,
-                                CalculatePerceptualHash(new Bitmap(path))));
-                                image.Dispose(); // Releasing any locks on the image so we can conduct operations on it such as moving it. 
-                        }
+                        imagesFound.Add(new Image(path, // TODO: Also consider deprecating the path, provided that we can easily obtain it. 
+                        CalculatePerceptualHash(new Bitmap(path))));
                     }
                     catch (Exception ex)
                     {
                         PrintErrorMessage(ex, "Loading Images", path, false);
                     }
+
+                    File.Move("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\aka kik.jpg",
+                    Path.Combine("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\Similar Img No. 1", Path.GetFileName("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\aka kik.jpg")));
+
+                    //FileStream fs = new FileStream("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\aka kik.jpg", FileMode.Open, FileAccess.ReadWrite, FileShare.None);
                 }
             }
 
@@ -533,44 +526,15 @@ namespace DuplicateImageDeletionTool
     /// the user-provided target directory
     /// </summary>
     /// <param name="path">The absolute path to the image</param>
-    /// <param name="size">The size of the image in bytes</param>
-    /// <param name="height">The height of the image in pixels</param>
-    /// <param name="width">The width of the image in pixels</param>
-    /// <param name="verticalResolution">Vertical Resolution of the image</param>
-    /// <param name="horizontalResolution">Horizontal Resolution of the image</param>
     /// <param name="pHash">Perceptual hash of this image</param>
     /// <param name="similarToAnotherImage">Prevents an image from having any similar images in its list if it's already similar to another one.</param>
-    class Image(string path, long size, int height, int width, double verticalResolution, double horizontalResolution, string pHash, bool similarToAnotherImage = false)
+    class Image(string path, string pHash, bool similarToAnotherImage = false)
     {
         public string Path { get; set; } = path;
-        public long Size { get; set; } = size;
-        public int Height { get; set; } = height;
-        public int Width { get; set; } = width;
-        public double VerticalResolution { get; set; } = verticalResolution;
-        public double HorizontalResolution { get; set; } = horizontalResolution;
         public List<Image> SimilarImages { get; set; } = new List<Image>();
         public string PHash { get; set; } = pHash;
         public bool SimilarToAnotherImage { get; set; } = similarToAnotherImage;
 
-        // Add a property to store the ImageSharp Image instance
-        //public Image<Rgba32> ImageSharpImage { get; set; } = SixLabors.ImageSharp.Image.Load<Rgba32>(path).Clone();
-
-        /// <summary>
-        /// Two images are exactly equal if all of their parameters are the same except the list of similar images and the paths
-        /// </summary>
-        /// <param name="imageA">The first image to compare</param>
-        /// <param name="imageB">The second image to compare</param>
-        /// <returns>True if they're identical, false otherwise</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public bool Equals(Image otherImage)
-        {
-            return Size == otherImage.Size
-            && Height == otherImage.Height
-            && Width == otherImage.Width
-            && VerticalResolution == otherImage.VerticalResolution
-            && HorizontalResolution == otherImage.HorizontalResolution
-            && PHash == otherImage.PHash;
-        }
     }
 
 }

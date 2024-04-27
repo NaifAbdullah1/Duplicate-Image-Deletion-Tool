@@ -41,4 +41,3 @@ C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Microsoft.Ext
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\Newtonsoft.Json.dll
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
 C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\itext.bouncy-castle-adapter.dll
-C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\bin\Debug\net9.0\SixLabors.ImageSharp.dll
