@@ -94,20 +94,23 @@ namespace DuplicateImageDeletionTool
         /// </summary>
         /// <param name="image"></param>
         /// <returns></returns>
-        static string CalculatePerceptualHash(Bitmap image)
+        static string CalculatePerceptualHash(string imagePath)
         {
-            // Resize the image to a fixed size
-            using (Bitmap resizedImage = ResizeImage(image, 32, 32))
+            using (Bitmap image = new Bitmap(imagePath))
             {
-                // Convert the resized image to grayscale
-                using (Bitmap grayscaleImage = ToGrayscale(resizedImage))
+                // Resize the image to a fixed size
+                using (Bitmap resizedImage = ResizeImage(image, 32, 32))
                 {
-                    // Calculate the average pixel value
-                    double averagePixelValue = CalculateAveragePixelValue(grayscaleImage);
+                    // Convert the resized image to grayscale
+                    using (Bitmap grayscaleImage = ToGrayscale(resizedImage))
+                    {
+                        // Calculate the average pixel value
+                        double averagePixelValue = CalculateAveragePixelValue(grayscaleImage);
 
-                    // Compute the hash
-                    string hash = ComputeHash(grayscaleImage, averagePixelValue);
-                    return hash;
+                        // Compute the hash
+                        string hash = ComputeHash(grayscaleImage, averagePixelValue);
+                        return hash;
+                    }
                 }
             }
         }
@@ -443,17 +446,12 @@ namespace DuplicateImageDeletionTool
                     try
                     {
                         imagesFound.Add(new Image(path, // TODO: Also consider deprecating the path, provided that we can easily obtain it. 
-                        CalculatePerceptualHash(new Bitmap(path))));
+                        CalculatePerceptualHash(path)));
                     }
                     catch (Exception ex)
                     {
                         PrintErrorMessage(ex, "Loading Images", path, false);
                     }
-
-                    File.Move("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\aka kik.jpg",
-                    Path.Combine("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\Similar Img No. 1", Path.GetFileName("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\aka kik.jpg")));
-
-                    //FileStream fs = new FileStream("C:\\Users\\Naif-\\Code\\Data Set - Images\\k\\aka kik.jpg", FileMode.Open, FileAccess.ReadWrite, FileShare.None);
                 }
             }
 
