@@ -1,14 +1,20 @@
 ﻿/*
 TODO: 
-1- Add some kind of filtering where we're only checking images, use a long regex to only take in all image extensions. 
+1- Do some further testing with real life images
 
+2- Once it's confirmed that there are no further major errors occurring, implement support for other image types, escpecially proprietary format such as HEIF and HEIC. 
 
-The two main approaches you'll want to think about are: 
-1- OOP program: Makes it a lot easier to understand and code. But there would be questions on whether this will make the runtime so long. But also, we want to ask ourselves if the runtime difference is negligible. 
+3- Complete the PDF writeup
 
-2- Using only a hashmap with a <string, string> key-value pair where the key is the hash and the value is the image's path. 
+4- Revise the Github page for any potential improvements
 
-If two images are identical, make sure to compare the other attributes such as resolution 
+5- Learn how to deploy this as a console application. 
+
+6- Consider adding a mechanism to allow the user to control the sensitivity or the similarity score. 
+
+7- Look into ways to improve runtime. Perhaps there's a way to run the program asynchronously. 
+
+- Add some kind of filtering where we're only checking images, use a long regex to only take in all image extensions. 
 */
 
 
@@ -17,9 +23,7 @@ using System.Drawing;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using System.Text.RegularExpressions;
-using System.Drawing.Printing;
 
-using System.Diagnostics;
 
 
 namespace DuplicateImageDeletionTool
