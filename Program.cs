@@ -15,6 +15,8 @@ TODO:
 7- Look into ways to improve runtime. Perhaps there's a way to run the program asynchronously. 
 
 - Add some kind of filtering where we're only checking images, use a long regex to only take in all image extensions. 
+
+- Clean the code and ensure you have javadoc and inline comments
 */
 
 
@@ -88,9 +90,6 @@ namespace DuplicateImageDeletionTool
             GroupSimilarImages(sanitizedPath, parentDirectory, imagesToFilter, report);
 
             Console.WriteLine("Done");
-
-
-
         }
 
         /// <summary>
@@ -285,7 +284,7 @@ namespace DuplicateImageDeletionTool
             // Going through all the images in a O(N^2) complexity to populate the SimilarImages variable for each image
 
             // Indicates if an image is similar to another
-            const double SimilarityThreshold = 65;
+            const double SimilarityThreshold = 75;
             foreach (Image imageA in imagesToFilter)
             {
                 if (imageA.SimilarToAnotherImage)
@@ -300,7 +299,11 @@ namespace DuplicateImageDeletionTool
                         if (!imageA.Path.Equals(imageB.Path) && imageB.SimilarToAnotherImage == false)
                         {
                             // If Image A and B are different images and B hasn't been already assigned to another one as a similar image
+                            
                             double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
+                            
+                            Console.WriteLine($"Computing similarity between {Path.GetFileName(imageA.Path)} and {Path.GetFileName(imageB.Path)} = {similarityScore}");
+
                             if (similarityScore >= SimilarityThreshold)
                             {
                                 // Similarity detected
