@@ -4,7 +4,7 @@ TODO:
 
 2- Once it's confirmed that there are no further major errors occurring, implement support for other image types, escpecially proprietary format such as HEIF and HEIC. 
 
-3- Complete the PDF writeup
+3- Complete the PDF writeup: This PDF will write a huge table listing all the similarity scores. It will also list unique images and unsupported images. 
 
 4- Revise the Github page for any potential improvements
 
@@ -301,7 +301,7 @@ namespace DuplicateImageDeletionTool
                             // If Image A and B are different images and B hasn't been already assigned to another one as a similar image
                             
                             double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
-                            
+
                             Console.WriteLine($"Computing similarity between {Path.GetFileName(imageA.Path)} and {Path.GetFileName(imageB.Path)} = {similarityScore}");
 
                             if (similarityScore >= SimilarityThreshold)
@@ -329,8 +329,7 @@ namespace DuplicateImageDeletionTool
                     if (image.SimilarImages.Count > 0)
                     {
                         string similarImageDirectory = CreateDirectory("Similar Img No. " + ++numOfDuplicateImageDirectoriesCreated,
-                        parentDirectory,
-                        numOfDuplicateImageDirectoriesCreated);
+                        parentDirectory);
 
                         // Now, dump 'image' along with its similar images into the similarImageDirectory
                         string parentImagePath = image.Path;
@@ -357,7 +356,7 @@ namespace DuplicateImageDeletionTool
             report.Close();
         }
 
-        static string CreateDirectory(string directoryName, string parentDirectory, int numOfDuplicateImageDirectoriesCreated = -1)
+        static string CreateDirectory(string directoryName, string parentDirectory)
         {
             // The address of the created directory
             string createdDirectory = $"{parentDirectory}/{directoryName}";
