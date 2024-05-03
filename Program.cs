@@ -21,6 +21,7 @@ TODO:
 
 
 using System.Drawing;
+using System.Drawing.Imaging;
 
 using iText.Kernel.Pdf;
 using iText.Layout;
@@ -285,30 +286,34 @@ namespace DuplicateImageDeletionTool
 
             // Indicates if an image is similar to another
             const double SimilarityThreshold = 75;
-            foreach (Image imageA in imagesToFilter)
+            string txtFileReportPath = $"{parentDirectory}/Report/TxtReport.txt";
+            using (StreamWriter writer = new StreamWriter(txtFileReportPath, append: true))
             {
-                if (imageA.SimilarToAnotherImage)
+                foreach (Image imageA in imagesToFilter)
                 {
-                    // Already falls under another image as similar
-                    continue;
-                }
-                else
-                {
-                    foreach (Image imageB in imagesToFilter)
+                    if (imageA.SimilarToAnotherImage)
                     {
-                        if (!imageA.Path.Equals(imageB.Path) && imageB.SimilarToAnotherImage == false)
+                        // Already falls under another image as similar
+                        continue;
+                    }
+                    else
+                    {
+                        foreach (Image imageB in imagesToFilter)
                         {
-                            // If Image A and B are different images and B hasn't been already assigned to another one as a similar image
-                            
-                            double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
-
-                            Console.WriteLine($"Computing similarity between {Path.GetFileName(imageA.Path)} and {Path.GetFileName(imageB.Path)} = {similarityScore}");
-
-                            if (similarityScore >= SimilarityThreshold)
+                            if (!imageA.Path.Equals(imageB.Path) && imageB.SimilarToAnotherImage == false)
                             {
-                                // Similarity detected
-                                imageA.SimilarImages.Add(imageB);
-                                imageB.SimilarToAnotherImage = true;
+                                // If Image A and B are different images and B hasn't been already assigned to another one as a similar image
+
+                                double similarityScore = CalculateSimilarityScore(imageA.PHash, imageB.PHash);
+                                
+                                writer.WriteLine($"Computing similarity between {Path.GetFileName(imageA.Path)} and {Path.GetFileName(imageB.Path)} = {similarityScore}");
+
+                                if (similarityScore >= SimilarityThreshold && AreDimensionsEqual(imageA.Path, imageB.Path))
+                                {
+                                    // Similarity detected
+                                    imageA.SimilarImages.Add(imageB);
+                                    imageB.SimilarToAnotherImage = true;
+                                }
                             }
                         }
                     }
@@ -522,6 +527,23 @@ namespace DuplicateImageDeletionTool
                 Environment.Exit(0);
             }
         }
+
+        static bool AreDimensionsEqual(string pathA, string pathB)
+        {
+            using (System.Drawing.Image metaDataA = System.Drawing.Image.FromFile(pathA))
+            {
+                using (System.Drawing.Image metaDataB = System.Drawing.Image.FromFile(pathB))
+                {
+                    int widthA = metaDataA.Width;
+                    int heightA = metaDataA.Height;
+
+                    int widthB = metaDataB.Width;
+                    int heightB = metaDataB.Height;
+
+                    return (widthA == widthB && heightA == heightB) ? true : false;
+                }
+            }
+        }
     }
 
 
@@ -538,7 +560,6 @@ namespace DuplicateImageDeletionTool
         public List<Image> SimilarImages { get; set; } = new List<Image>();
         public string PHash { get; set; } = pHash;
         public bool SimilarToAnotherImage { get; set; } = similarToAnotherImage;
-
     }
 
 }

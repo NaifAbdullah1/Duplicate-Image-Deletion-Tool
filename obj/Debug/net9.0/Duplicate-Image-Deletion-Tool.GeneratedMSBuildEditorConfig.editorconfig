@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Duplicate_Image_Deletion_Tool
-build_property.ProjectDir = C:\Users\Naif-\Code\Duplicate-Image-Deletion-Tool\
+build_property.ProjectDir = C:\Users\Naif-\Code\Duplicate-Image-Detection-Grouping-Tool\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\Duplicate-Image-Deletion-Tool.csproj": {}
+    "C:\\Users\\Naif-\\Code\\Duplicate-Image-Detection-Grouping-Tool\\Duplicate-Image-Deletion-Tool.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\Duplicate-Image-Deletion-Tool.csproj": {
+    "C:\\Users\\Naif-\\Code\\Duplicate-Image-Detection-Grouping-Tool\\Duplicate-Image-Deletion-Tool.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\Duplicate-Image-Deletion-Tool.csproj",
+        "projectUniqueName": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Detection-Grouping-Tool\\Duplicate-Image-Deletion-Tool.csproj",
         "projectName": "Duplicate-Image-Deletion-Tool",
-        "projectPath": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\Duplicate-Image-Deletion-Tool.csproj",
+        "projectPath": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Detection-Grouping-Tool\\Duplicate-Image-Deletion-Tool.csproj",
         "packagesPath": "C:\\Users\\Naif-\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Deletion-Tool\\obj\\",
+        "outputPath": "C:\\Users\\Naif-\\Code\\Duplicate-Image-Detection-Grouping-Tool\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Naif-\\AppData\\Roaming\\NuGet\\NuGet.Config"
