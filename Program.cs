@@ -14,8 +14,6 @@ TODO:
 
 7- Look into ways to improve runtime. Perhaps there's a way to run the program asynchronously. 
 
-- Add some kind of filtering where we're only checking images, use a long regex to only take in all image extensions. 
-
 - Clean the code and ensure you have javadoc and inline comments
 */
 
@@ -70,8 +68,18 @@ namespace DuplicateImageDeletionTool
             do
             {
                 targetDirectory = Console.ReadLine();
-                sanitizedPath = IsUserInputValid(targetDirectory);
-                //parentDirectory = sanitizedPath;
+                /*
+                if (targetDirectory != null)
+                {
+                    sanitizedPath = IsUserInputValid(targetDirectory);
+                } else 
+                {
+                    sanitizedPath = null;
+                }
+                */
+
+                sanitizedPath = (targetDirectory != null)? IsUserInputValid(targetDirectory) : null; 
+
             }
             while (sanitizedPath == null);
 
@@ -82,11 +90,13 @@ namespace DuplicateImageDeletionTool
 
             string reportDirectory = CreateDirectory("Report", parentDirectory);
 
-            Document report = CreateReport(reportDirectory);
+            Document? report = CreateReport(reportDirectory);
 
             // Traverse a directory and its subdirectories. Results is a list of every image's path
+#pragma warning disable CS8604 // Possible null reference argument.
             List<Image> imagesToFilter =
             TraverseTargetDirectory(sanitizedPath, parentDirectory, report);
+#pragma warning restore CS8604 // Possible null reference argument.
 
             GroupSimilarImages(sanitizedPath, parentDirectory, imagesToFilter, report);
 
@@ -382,7 +392,7 @@ namespace DuplicateImageDeletionTool
             return createdDirectory;
         }
 
-        static Document CreateReport(string reportDirectory)
+        static Document? CreateReport(string reportDirectory)
         {
             try
             {
